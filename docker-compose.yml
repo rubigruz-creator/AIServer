@@ -1,0 +1,81 @@
+# Стек для ИИ-агента автосервиса: Ollama + Open WebUI + n8n (опционально)
+# Запуск: docker compose up -d
+# Остановка: docker compose down
+
+services:
+  ollama:
+    image: ollama/ollama:latest
+    container_name: ollama
+    restart: unless-stopped
+    volumes:
+      - ollama_data:/root/.ollama
+    ports:
+      # Только localhost — снаружи Ollama недоступна (безопасность)
+      - "127.0.0.1:11434:11434"
+    environment:
+      - TZ=${TZ:-Europe/Moscow}
+    # Раскомментируйте блок ниже, если на сервере есть NVIDIA GPU:
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices:
+    #         - driver: nvidia
+    #           count: all
+    #           capabilities: [gpu]
+
+  open-webui:
+    image: ghcr.io/open-webui/open-webui:main
+    container_name: open-webui
+    restart: unless-stopped
+    depends_on:
+      - ollama
+    env_file:
+      - .env
+    environment:
+      - OLLAMA_BASE_URL=http://ollama:11434
+      - WEBUI_SECRET_KEY=${WEBUI_SECRET_KEY}
+      - WEBUI_NAME=Автосервис — ИИ-администратор
+      - DEFAULT_LOCALE=${WEBUI_DEFAULT_LOCALE:-ru-RU}
+      - ENABLE_SIGNUP=${WEBUI_ENABLE_SIGNUP:-false}
+      - ENABLE_PERSISTENT_CONFIG=${ENABLE_PERSISTENT_CONFIG:-false}
+      - WEBUI_ADMIN_EMAIL=${WEBUI_ADMIN_EMAIL:-}
+      - WEBUI_ADMIN_PASSWORD=${WEBUI_ADMIN_PASSWORD:-}
+      - WEBUI_ADMIN_NAME=${WEBUI_ADMIN_NAME:-Администратор}
+      - DEFAULT_MODELS=${OLLAMA_DEFAULT_MODEL:-truck-service}
+      - WEBUI_URL=https://${DOMAIN}
+      - TZ=${TZ:-Europe/Moscow}
+    volumes:
+      - open_webui_data:/app/backend/data
+    ports:
+      # Только localhost — снаружи доступ через Nginx + HTTPS
+      - "127.0.0.1:3000:8080"
+
+  # n8n — опционально (docker compose --profile automation up -d)
+  n8n:
+    image: n8nio/n8n:latest
+    container_name: n8n
+    restart: unless-stopped
+    profiles:
+      - automation
+    env_file:
+      - .env
+    environment:
+      - N8N_HOST=${N8N_HOST:-n8n.local}
+      - N8N_PORT=5678
+      - N8N_PROTOCOL=https
+      - WEBHOOK_URL=https://${N8N_HOST}/
+      - GENERIC_TIMEZONE=${TZ:-Europe/Moscow}
+      - TZ=${TZ:-Europe/Moscow}
+      - N8N_BASIC_AUTH_ACTIVE=true
+      - N8N_BASIC_AUTH_USER=${N8N_BASIC_AUTH_USER}
+      - N8N_BASIC_AUTH_PASSWORD=${N8N_BASIC_AUTH_PASSWORD}
+      - N8N_ENCRYPTION_KEY=${N8N_ENCRYPTION_KEY}
+    volumes:
+      - n8n_data:/home/node/.n8n
+    ports:
+      - "127.0.0.1:5678:5678"
+
+volumes:
+  ollama_data:
+  open_webui_data:
+  n8n_data:
