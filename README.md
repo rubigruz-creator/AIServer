@@ -28,7 +28,10 @@ chmod +x scripts/*.sh
 
 ```
 AIServer/
-├── .docs/PROJECT.md          ← полная документация (архитектура, ошибки, Hestia)
+├── .docs/
+│   ├── PROJECT.md              ← для людей (история, ошибки)
+│   ├── AGENT-CONTEXT.md        ← для ИИ-агентов (техспека)
+│   └── WIDGET-INTEGRATION.md   ← виджет на сайт (Phase 2)
 ├── docker-compose.yml
 ├── .env.example
 ├── prompts/truck-service-system.txt
@@ -63,9 +66,11 @@ AIServer/
 
 ## Документация
 
-**Полное описание проекта, все ошибки и решения, HestiaCP, Nginx, SSL:**
-
-→ **[.docs/PROJECT.md](.docs/PROJECT.md)**
+| Документ | Аудитория |
+|----------|-----------|
+| [.docs/PROJECT.md](.docs/PROJECT.md) | Люди: история, ошибки, Hestia, runbook |
+| [.docs/AGENT-CONTEXT.md](.docs/AGENT-CONTEXT.md) | **ИИ-агенты:** архитектура, инварианты, API |
+| [.docs/WIDGET-INTEGRATION.md](.docs/WIDGET-INTEGRATION.md) | Виджет чата на сайт (Phase 2, planned) |
 
 ---
 

@@ -6,6 +6,9 @@
 
 Этот документ описывает архитектуру, историю развёртывания, все проблемы и их решения. Цель — чтобы новый разработчик мог продолжить работу без перебора переписки.
 
+**Для ИИ-агентов (технический контекст):** [.docs/AGENT-CONTEXT.md](./AGENT-CONTEXT.md)  
+**Следующая задача (виджет на сайт):** [.docs/WIDGET-INTEGRATION.md](./WIDGET-INTEGRATION.md)
+
 ---
 
 ## 1. Назначение проекта
@@ -89,7 +92,9 @@ flowchart LR
 ```
 AIServer/
 ├── .docs/
-│   └── PROJECT.md          ← этот файл
+│   ├── PROJECT.md
+│   ├── AGENT-CONTEXT.md
+│   └── WIDGET-INTEGRATION.md
 ├── docker-compose.yml      # Ollama, Open WebUI, n8n (profile)
 ├── .env.example            # шаблон секретов
 ├── .env                    # секреты (НЕ коммитить!)
@@ -426,8 +431,8 @@ certbot renew --dry-run
 
 ## 12. Следующие шаги (backlog)
 
-1. **n8n** — парсинг строки «ЗАЯВКА СОЗДАНА» → Telegram/email.
-2. **iframe** — встроить чат на сайт `remont-gazon.ru`.
+1. **Виджет на сайте** — плавающий чат справа снизу → см. [.docs/WIDGET-INTEGRATION.md](./WIDGET-INTEGRATION.md) и [.docs/AGENT-CONTEXT.md](./AGENT-CONTEXT.md) §12.
+2. **n8n** — парсинг строки «ЗАЯВКА СОЗДАНА» → Telegram/email.
 3. **Swap 4 GB** — если ещё не добавлен постоянно.
 4. **Мониторинг диска** — cron + алерт при `< 5 GB`.
 5. **Бэкап** volumes `ollama_data`, `open_webui_data`.
