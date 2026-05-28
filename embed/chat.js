@@ -1,7 +1,7 @@
 (function () {
   'use strict';
 
-  var API_URL = '/embed/api/chat/completions';
+  var API_URL = '/embed/ollama/chat';
   var MODEL = 'truck-service:latest';
   var messagesEl = document.getElementById('messages');
   var inputEl = document.getElementById('input');
@@ -25,8 +25,8 @@
     inputEl.disabled = state;
   }
 
-  function parseSseChunk(raw) {
-    if (!raw || raw === '[DONE]') {
+  function parseJsonLine(raw) {
+    if (!raw) {
       return null;
     }
     try {
@@ -34,20 +34,6 @@
     } catch (err) {
       return null;
     }
-  }
-
-  function extractDeltaContent(chunk) {
-    if (!chunk || !chunk.choices || !chunk.choices.length) {
-      return '';
-    }
-    var choice = chunk.choices[0];
-    if (choice.delta && choice.delta.content) {
-      return choice.delta.content;
-    }
-    if (choice.message && choice.message.content) {
-      return choice.message.content;
-    }
-    return '';
   }
 
   async function streamAssistantReply(userText) {
@@ -105,12 +91,14 @@
 
         for (var i = 0; i < parts.length; i++) {
           var line = parts[i].trim();
-          if (!line.startsWith('data:')) {
+          var chunk = parseJsonLine(line);
+          if (!chunk) {
             continue;
           }
-          var payload = line.slice(5).trim();
-          var chunk = parseSseChunk(payload);
-          var delta = extractDeltaContent(chunk);
+          var delta = '';
+          if (chunk.message && typeof chunk.message.content === 'string') {
+            delta = chunk.message.content;
+          }
           if (delta) {
             assistantText += delta;
             assistantEl.textContent = assistantText;
