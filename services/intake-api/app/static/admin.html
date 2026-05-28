@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Заявки и диалоги — AIServer</title>
+  <style>
+    :root {
+      --bg: #f4f6f5;
+      --card: #fff;
+      --border: #dde5e0;
+      --primary: #1a6b4a;
+      --text: #1a1a1a;
+      --muted: #5c6b63;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+    }
+    header {
+      background: var(--primary);
+      color: #fff;
+      padding: 16px 24px;
+    }
+    header h1 { margin: 0; font-size: 20px; }
+    header p { margin: 6px 0 0; opacity: 0.9; font-size: 14px; }
+    main { padding: 20px 24px 40px; max-width: 1400px; margin: 0 auto; }
+    .toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+    label { font-size: 14px; color: var(--muted); }
+    input[type="checkbox"] { margin-right: 6px; }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: var(--card);
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: 0 2px 8px rgba(0,0,0,.06);
+    }
+    th, td {
+      border-bottom: 1px solid var(--border);
+      padding: 10px 12px;
+      text-align: left;
+      vertical-align: top;
+      font-size: 13px;
+    }
+    th { background: #eef3f0; font-weight: 600; }
+    tr:hover { background: #f9fbfa; cursor: pointer; }
+    .badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+    .badge-yes { background: #d4edda; color: #155724; }
+    .badge-no { background: #f0f0f0; color: #666; }
+    .detail {
+      margin-top: 20px;
+      background: var(--card);
+      border-radius: 10px;
+      padding: 16px;
+      box-shadow: 0 2px 8px rgba(0,0,0,.06);
+      display: none;
+    }
+    .detail.open { display: block; }
+    .msg {
+      margin: 8px 0;
+      padding: 10px 12px;
+      border-radius: 8px;
+      font-size: 14px;
+      line-height: 1.45;
+      white-space: pre-wrap;
+    }
+    .msg.user { background: #e8f5ee; }
+    .msg.assistant { background: #fff; border: 1px solid var(--border); }
+    .msg.system { background: #f0f4f2; color: var(--muted); font-size: 13px; }
+    .meta { font-size: 12px; color: var(--muted); margin-bottom: 12px; }
+    .empty { padding: 24px; text-align: center; color: var(--muted); }
+    button {
+      background: var(--primary);
+      color: #fff;
+      border: 0;
+      border-radius: 8px;
+      padding: 8px 14px;
+      cursor: pointer;
+      font-size: 14px;
+    }
+    button:hover { opacity: 0.92; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Диалоги и заявки виджета</h1>
+    <p>Полная история чатов с сайта · для оповещений подключите INTAKE_WEBHOOK_URL (n8n, MAX и др.)</p>
+  </header>
+  <main>
+    <div class="toolbar">
+      <label>
+        <input type="checkbox" id="applicationsOnly">
+        Только с заявкой
+      </label>
+      <button type="button" id="refreshBtn">Обновить</button>
+      <span id="stats" class="meta"></span>
+    </div>
+    <table>
+      <thead>
+        <tr>
+          <th>Создан</th>
+          <th>Обновлён</th>
+          <th>Заявка</th>
+          <th>Телефон</th>
+          <th>Авто</th>
+          <th>Услуга</th>
+          <th>Сообщений</th>
+          <th>ID</th>
+        </tr>
+      </thead>
+      <tbody id="rows"></tbody>
+    </table>
+    <div id="empty" class="empty" style="display:none">Пока нет диалогов</div>
+    <section id="detail" class="detail">
+      <h2>Диалог</h2>
+      <div id="detailMeta" class="meta"></div>
+      <div id="detailMessages"></div>
+    </section>
+  </main>
+  <script>
+    const rowsEl = document.getElementById('rows');
+    const detailEl = document.getElementById('detail');
+    const detailMeta = document.getElementById('detailMeta');
+    const detailMessages = document.getElementById('detailMessages');
+    const statsEl = document.getElementById('stats');
+    const emptyEl = document.getElementById('empty');
+
+    function fmt(iso) {
+      if (!iso) return '—';
+      try {
+        return new Date(iso).toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' });
+      } catch (e) {
+        return iso;
+      }
+    }
+
+    async function loadList() {
+      const only = document.getElementById('applicationsOnly').checked;
+      const url = '/intake/api/admin/conversations?limit=200' +
+        (only ? '&applications_only=true' : '');
+      const res = await fetch(url, { credentials: 'same-origin' });
+      if (!res.ok) {
+        alert('Ошибка загрузки: ' + res.status);
+        return;
+      }
+      const data = await res.json();
+      statsEl.textContent = 'Всего: ' + data.total;
+      rowsEl.innerHTML = '';
+      if (!data.items.length) {
+        emptyEl.style.display = 'block';
+        detailEl.classList.remove('open');
+        return;
+      }
+      emptyEl.style.display = 'none';
+      data.items.forEach(function (item) {
+        const tr = document.createElement('tr');
+        tr.innerHTML =
+          '<td>' + fmt(item.created_at) + '</td>' +
+          '<td>' + fmt(item.updated_at) + '</td>' +
+          '<td><span class="badge ' + (item.has_application ? 'badge-yes' : 'badge-no') + '">' +
+          (item.has_application ? 'да' : 'нет') + '</span></td>' +
+          '<td>' + (item.client_phone || '—') + '</td>' +
+          '<td>' + (item.vehicle || '—') + '</td>' +
+          '<td>' + (item.service_type || '—') + '</td>' +
+          '<td>' + (item.message_count || 0) + '</td>' +
+          '<td style="font-family:monospace;font-size:11px">' + item.id + '</td>';
+        tr.addEventListener('click', function () { loadDetail(item.id); });
+        rowsEl.appendChild(tr);
+      });
+    }
+
+    async function loadDetail(id) {
+      const res = await fetch('/intake/api/admin/conversations/' + encodeURIComponent(id), {
+        credentials: 'same-origin',
+      });
+      if (!res.ok) {
+        alert('Ошибка: ' + res.status);
+        return;
+      }
+      const data = await res.json();
+      const c = data.conversation;
+      detailMeta.textContent =
+        'Создан: ' + fmt(c.created_at) +
+        ' · Обновлён: ' + fmt(c.updated_at) +
+        (c.application_line ? ' · ' + c.application_line : '');
+      detailMessages.innerHTML = '';
+      data.messages.forEach(function (m) {
+        const div = document.createElement('div');
+        div.className = 'msg ' + m.role;
+        div.textContent = (m.role === 'user' ? 'Клиент: ' : m.role === 'assistant' ? 'Бот: ' : '') + m.content;
+        detailMessages.appendChild(div);
+      });
+      detailEl.classList.add('open');
+    }
+
+    document.getElementById('refreshBtn').addEventListener('click', loadList);
+    document.getElementById('applicationsOnly').addEventListener('change', loadList);
+    loadList();
+  </script>
+</body>
+</html>

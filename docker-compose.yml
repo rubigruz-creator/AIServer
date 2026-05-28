@@ -54,6 +54,24 @@ services:
       # Только localhost — снаружи доступ через Nginx + HTTPS
       - "127.0.0.1:3000:8080"
 
+  # Хранение диалогов виджета и заявок (SQLite + админ-страница)
+  intake-api:
+    build: ./services/intake-api
+    container_name: intake-api
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      - INTAKE_DB_PATH=/data/intake.db
+      - INTAKE_ADMIN_USER=${INTAKE_ADMIN_USER:-admin}
+      - INTAKE_ADMIN_PASSWORD=${INTAKE_ADMIN_PASSWORD:-}
+      - INTAKE_WEBHOOK_URL=${INTAKE_WEBHOOK_URL:-}
+      - TZ=${TZ:-Europe/Moscow}
+    volumes:
+      - intake_data:/data
+    ports:
+      - "127.0.0.1:3100:3100"
+
   # n8n — опционально (docker compose --profile automation up -d)
   n8n:
     image: n8nio/n8n:latest
@@ -82,4 +100,5 @@ services:
 volumes:
   ollama_data:
   open_webui_data:
+  intake_data:
   n8n_data:

@@ -83,8 +83,10 @@ systemctl reload nginx
 
 # --- 5. Docker (без сброса данных) ---
 if command -v docker >/dev/null 2>&1 && [[ -f docker-compose.yml ]]; then
-  echo "==> docker compose up -d (open-webui, ollama)..."
-  docker compose up -d ollama open-webui 2>/dev/null || docker compose up -d
+  echo "==> docker compose build intake-api (если нужно)..."
+  docker compose build intake-api 2>/dev/null || true
+  echo "==> docker compose up -d (ollama, open-webui, intake-api)..."
+  docker compose up -d ollama open-webui intake-api 2>/dev/null || docker compose up -d
 fi
 
 # --- 6. Проверки ---
@@ -96,9 +98,12 @@ curl -s -o /dev/null -w "  embed/chat.html     → HTTP %{http_code}\n" \
   "https://agent.remont-gazon.ru/embed/chat.html" || true
 curl -s -o /dev/null -w "  Open WebUI local    → HTTP %{http_code}\n" \
   "http://127.0.0.1:3000/" || true
+curl -s -o /dev/null -w "  intake-api health   → HTTP %{http_code}\n" \
+  "http://127.0.0.1:3100/health" || true
 
 echo ""
 echo "==> Готово."
 echo "  1) Откройте https://agent.remont-gazon.ru/embed/chat.html — тест чата"
-echo "  2) Snippet для сайта: embed/snippet.html"
-echo "  3) Если API 401 — проверьте widget user и sk-... в $NGINX_KEY_CONF"
+echo "  2) Админ диалогов: https://agent.remont-gazon.ru/intake/admin (INTAKE_ADMIN_* в .env)"
+echo "  3) Snippet для сайта: embed/snippet.html"
+echo "  4) Если API 401 — проверьте widget user и sk-... в $NGINX_KEY_CONF"

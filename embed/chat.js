@@ -2,6 +2,8 @@
   'use strict';
 
   var API_URL = '/embed/ollama/chat';
+  var INTAKE_API = '/intake/api';
+  var SESSION_KEY = 'aiserver_session_id';
   var MODEL = 'truck-service:latest';
   var messagesEl = document.getElementById('messages');
   var inputEl = document.getElementById('input');
@@ -9,6 +11,51 @@
   var closeBtn = document.getElementById('close');
   var history = [];
   var busy = false;
+
+  function getSessionId() {
+    var id = localStorage.getItem(SESSION_KEY);
+    if (!id) {
+      id =
+        'sess_' +
+        Date.now().toString(36) +
+        '_' +
+        Math.random().toString(36).slice(2, 12);
+      localStorage.setItem(SESSION_KEY, id);
+    }
+    return id;
+  }
+
+  async function ensureSession() {
+    try {
+      await fetch(INTAKE_API + '/session', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          session_id: getSessionId(),
+          source_url: document.referrer || '',
+          user_agent: navigator.userAgent || '',
+        }),
+      });
+    } catch (err) {
+      console.warn('[AIServer intake] session', err);
+    }
+  }
+
+  async function logMessage(role, content) {
+    try {
+      await fetch(INTAKE_API + '/messages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          session_id: getSessionId(),
+          role: role,
+          content: content,
+        }),
+      });
+    } catch (err) {
+      console.warn('[AIServer intake] message', err);
+    }
+  }
 
   function appendMessage(role, text) {
     var el = document.createElement('div');
@@ -111,6 +158,7 @@
         assistantEl.textContent = 'Извините, не удалось получить ответ. Попробуйте ещё раз.';
       } else {
         history.push({ role: 'assistant', content: assistantText });
+        await logMessage('assistant', assistantText);
       }
     } catch (err) {
       if (typingEl.parentNode) {
@@ -133,6 +181,7 @@
 
     inputEl.value = '';
     appendMessage('user', text);
+    await logMessage('user', text);
     setBusy(true);
     await streamAssistantReply(text);
     setBusy(false);
@@ -156,8 +205,11 @@
     });
   }
 
-  appendMessage(
-    'system',
-    'Здравствуйте! Я помогу записать ваш грузовой автомобиль на обслуживание. Напишите, с чего начнём — марка и модель авто.'
-  );
+  var welcomeText =
+    'Здравствуйте! Я помогу записать ваш грузовой автомобиль на обслуживание. Напишите, с чего начнём — марка и модель авто.';
+
+  ensureSession().then(function () {
+    appendMessage('system', welcomeText);
+    logMessage('system', welcomeText);
+  });
 })();
