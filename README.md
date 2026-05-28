@@ -76,6 +76,9 @@ AIServer/
 | [.docs/PROJECT.md](.docs/PROJECT.md) | Люди: история, ошибки, Hestia, runbook |
 | [.docs/AGENT-CONTEXT.md](.docs/AGENT-CONTEXT.md) | **ИИ-агенты:** архитектура, инварианты, API |
 | [.docs/WIDGET-INTEGRATION.md](.docs/WIDGET-INTEGRATION.md) | Виджет чата на `ons.remont-gazon.ru` |
+| [.docs/GITHUB-PUBLISH.md](.docs/GITHUB-PUBLISH.md) | Публикация на GitHub (push, 403, безопасность) |
+
+**GitHub:** https://github.com/ts-rubiroid/AIServer
 
 ---
 
