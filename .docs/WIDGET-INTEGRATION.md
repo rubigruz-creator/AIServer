@@ -77,6 +77,18 @@ scripts/widget-setup.sh               # пошаговая настройка н
 
 ## 5. Развёртывание на VPS
 
+**Автоматический скрипт** (на сервере после `git pull`):
+
+```bash
+cd /root/AIServer
+export WIDGET_API_KEY='sk-ВАШ_КЛЮЧ'
+./scripts/fix-line-endings.sh
+chmod +x scripts/*.sh
+./scripts/widget-deploy.sh
+```
+
+Репозиторий: https://github.com/rubigruz-creator/AIServer
+
 ### 5.1 Open WebUI — сервисный пользователь
 
 1. Admin Panel → Users → **Add User**  

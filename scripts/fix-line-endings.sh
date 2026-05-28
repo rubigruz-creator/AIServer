@@ -11,7 +11,8 @@ if ! command -v dos2unix >/dev/null 2>&1; then
   exit 1
 fi
 
-dos2unix "$ROOT_DIR"/scripts/*.sh
+dos2unix "$ROOT_DIR"/scripts/*.sh 2>/dev/null || true
+dos2unix "$ROOT_DIR"/embed/* 2>/dev/null || true
 dos2unix "$ROOT_DIR"/prompts/*.txt 2>/dev/null || true
 dos2unix "$ROOT_DIR"/ollama/* 2>/dev/null || true
 chmod +x "$ROOT_DIR"/scripts/*.sh

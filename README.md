@@ -54,7 +54,8 @@ AIServer/
 | `./scripts/model-pull.sh` | Скачать модель |
 | `./scripts/model-create.sh` | Собрать `truck-service` |
 | `./scripts/reset-webui.sh` | Сброс Open WebUI |
-| `./scripts/widget-setup.sh` | Настройка embed-виджета на VPS |
+| `./scripts/widget-setup.sh` | Справка по настройке виджета |
+| `./scripts/widget-deploy.sh` | Деплой виджета на VPS (nginx + проверки) |
 
 ---
 
