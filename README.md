@@ -78,7 +78,7 @@ AIServer/
 | [.docs/WIDGET-INTEGRATION.md](.docs/WIDGET-INTEGRATION.md) | Виджет чата на `ons.remont-gazon.ru` |
 | [.docs/GITHUB-PUBLISH.md](.docs/GITHUB-PUBLISH.md) | Публикация на GitHub (push, 403, безопасность) |
 
-**GitHub:** https://github.com/ts-rubiroid/AIServer
+**GitHub:** https://github.com/rubigruz-creator/AIServer
 
 ---
 
