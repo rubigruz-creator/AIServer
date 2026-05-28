@@ -2,7 +2,7 @@
   'use strict';
 
   var API_URL = '/embed/api/chat/completions';
-  var MODEL = 'truck-service';
+  var MODEL = 'truck-service:latest';
   var messagesEl = document.getElementById('messages');
   var inputEl = document.getElementById('input');
   var sendBtn = document.getElementById('send');
