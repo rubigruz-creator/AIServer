@@ -17,6 +17,7 @@ GITHUB_REPO="${AISERVER_GITHUB_REPO:-https://github.com/rubigruz-creator/AIServe
 NGINX_KEY_CONF="/etc/nginx/conf.d/aiserver-widget-api-key.conf"
 NGINX_AGENT_CONF="/etc/nginx/conf.d/zz-agent-webui.conf"
 VPS_IP="${AISERVER_VPS_IP:-90.156.171.36}"
+EMBED_PUBLIC_DIR="/var/www/aiserver/embed"
 
 echo "==> AIServer widget deploy"
 
@@ -35,6 +36,11 @@ if [[ ! -f embed/widget.js ]]; then
   echo "Ошибка: нет embed/widget.js в $ROOT_DIR" >&2
   exit 1
 fi
+
+echo "==> Публикация embed-статики в $EMBED_PUBLIC_DIR"
+mkdir -p "$EMBED_PUBLIC_DIR"
+cp -f embed/* "$EMBED_PUBLIC_DIR"/
+chmod 644 "$EMBED_PUBLIC_DIR"/*
 
 # --- 2. API key для nginx ---
 if [[ -n "${WIDGET_API_KEY:-}" ]]; then

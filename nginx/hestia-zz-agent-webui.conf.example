@@ -45,8 +45,10 @@ server {
     }
 
     # --- Виджет: статика (launcher + chat UI) ---
+    # Файлы публикуются в /var/www/aiserver/embed, т.к. nginx-воркер
+    # не может читать /root/AIServer/* при стандартных правах /root (0700).
     location /embed/ {
-        alias /root/AIServer/embed/;
+        alias /var/www/aiserver/embed/;
         add_header Cache-Control "public, max-age=3600";
         add_header Access-Control-Allow-Origin "*";
         add_header Content-Security-Policy "frame-ancestors 'self' https://ons.remont-gazon.ru https://remont-gazon.ru https://www.remont-gazon.ru" always;
