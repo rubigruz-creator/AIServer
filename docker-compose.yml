@@ -43,6 +43,10 @@ services:
       - WEBUI_ADMIN_NAME=${WEBUI_ADMIN_NAME:-Администратор}
       - DEFAULT_MODELS=${OLLAMA_DEFAULT_MODEL:-truck-service}
       - WEBUI_URL=https://${DOMAIN}
+      # Права по умолчанию для новых пользователей (сервисный widget-user настраивается в Admin UI)
+      - USER_PERMISSIONS_CHAT_CONTROLS=${WEBUI_CHAT_CONTROLS:-false}
+      - USER_PERMISSIONS_CHAT_TEMPORARY=${WEBUI_CHAT_TEMPORARY:-true}
+      - USER_PERMISSIONS_FEATURES_API_KEYS=${WEBUI_FEATURES_API_KEYS:-true}
       - TZ=${TZ:-Europe/Moscow}
     volumes:
       - open_webui_data:/app/backend/data

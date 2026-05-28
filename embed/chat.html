@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Чат — автосервис грузовиков</title>
+  <link rel="stylesheet" href="chat.css">
+</head>
+<body>
+  <div class="chat-app">
+    <header class="chat-header">
+      <div>
+        <h1>Автосервис — запись на обслуживание</h1>
+        <p>ИИ-администратор · грузовые автомобили</p>
+      </div>
+      <button type="button" class="chat-close" id="close" aria-label="Закрыть чат">×</button>
+    </header>
+    <div class="chat-messages" id="messages" role="log" aria-live="polite"></div>
+    <div class="chat-input-row">
+      <textarea
+        id="input"
+        class="chat-input"
+        rows="1"
+        placeholder="Ваше сообщение…"
+        aria-label="Сообщение"
+      ></textarea>
+      <button type="button" class="chat-send" id="send">Отправить</button>
+    </div>
+  </div>
+  <script src="chat.js" defer></script>
+</body>
+</html>

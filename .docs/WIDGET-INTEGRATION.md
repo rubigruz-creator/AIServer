@@ -1,8 +1,9 @@
 # Website Widget Integration — Technical Spec
 
-> **Status:** NOT IMPLEMENTED (planned Phase 2)  
+> **Status:** IMPLEMENTED (Phase 2a–2b)  
 > **Parent context:** [AGENT-CONTEXT.md](./AGENT-CONTEXT.md) §12  
-> **Chat backend:** `https://agent.remont-gazon.ru` (Open WebUI + Ollama `truck-service`)
+> **Chat backend:** `https://agent.remont-gazon.ru` (Open WebUI + Ollama `truck-service`)  
+> **Target site:** `ons.remont-gazon.ru`
 
 ---
 
@@ -10,209 +11,158 @@
 
 Render a **floating chat assistant** on the business website:
 
-- **Collapsed:** circular/rounded button, fixed `bottom-right`
+- **Collapsed:** circular button, fixed `bottom-right`
 - **Expanded:** chat panel (~380–420px × 560–640px), same corner
 - **Behavior:** identical intake flow as production agent (Russian, `ЗАЯВКА СОЗДАНА` line)
 
-**Non-goals for MVP:**
-
-- Custom LLM fine-tuning
-- Multi-tenant auth
-- Payment integration
-
 ---
 
-## 2. Target Sites (confirm with owner)
+## 2. Phase 2a — Discovery (результаты)
 
-| Domain | Hestia vhost | Notes |
-|--------|--------------|-------|
-| `ons.remont-gazon.ru` | exists | likely main site candidate |
-| `remont-gazon.ru` | verify DNS | may redirect |
-| `gazonbaza.ru` | exists | unrelated brand? confirm |
+| Вариант | Вердикт |
+|---------|---------|
+| iframe на `/` Open WebUI | ❌ Требует логин (`WEBUI_ENABLE_SIGNUP=false`) |
+| Shared link `/s/{id}` | ❌ Read-only снимок, не новый диалог |
+| `WEBUI_AUTH=false` | ❌ Только пустая БД; ломает prod-админа |
+| **API key + nginx proxy + свой chat UI** | ✅ Выбран для MVP |
 
-Agent must confirm which `public_html` receives the embed snippet.
+**Вывод:** публичный чат реализован через `embed/chat.html`, который вызывает `/embed/api/chat/completions`. Nginx добавляет `Authorization: Bearer <API key>` — ключ **не попадает в браузер**.
 
----
+**Проверка заголовков (на сервере):**
 
-## 3. Architecture Options
-
-```text
-┌─────────────────────────────────────┐
-│  Parent site (remont-gazon.ru)      │
-│  ┌──────────────┐                   │
-│  │ widget.js    │ launcher UI       │
-│  └──────┬───────┘                   │
-│         │ iframe src                │
-│         ▼                           │
-│  https://agent.remont-gazon.ru      │
-└─────────────────────────────────────┘
-         │
-         ▼ (existing stack)
-    Open WebUI → Ollama truck-service
+```bash
+curl -sI https://agent.remont-gazon.ru/embed/chat.html | grep -iE 'frame|content-security'
+curl -sI https://agent.remont-gazon.ru/embed/widget.js | head -5
 ```
 
 ---
 
-## 4. Recommended Approach: iframe + launcher
+## 3. Архитектура (реализовано)
 
-### 4.1 Files to add (repository)
+```text
+ons.remont-gazon.ru
+  widget.js / widget.css  ← загрузка с agent.remont-gazon.ru/embed/
+  iframe → agent.remont-gazon.ru/embed/chat.html
+                │
+                POST /embed/api/chat/completions
+                │
+                ▼
+         nginx (+ Bearer API key)
+                │
+                ▼
+         Open WebUI :3000 → Ollama truck-service
+```
+
+---
+
+## 4. Файлы в репозитории
 
 ```text
 embed/
+  widget.js       # launcher + iframe panel
   widget.css
-  widget.js
-  snippet.html      # install instructions
+  chat.html       # публичный чат (RU)
+  chat.js         # streaming UI → /embed/api/
+  chat.css
+  snippet.html    # copy-paste для public_html
+
+nginx/
+  hestia-zz-agent-webui.conf.example  # + /embed/ + CSP
+  widget-api-key.conf.example         # map $widget_api_key (на сервере)
+
+scripts/widget-setup.sh               # пошаговая настройка на VPS
 ```
 
-### 4.2 `widget.js` behavior (spec)
+---
 
-```javascript
-// Pseudocode contract
-const CONFIG = {
-  chatUrl: 'https://agent.remont-gazon.ru',  // or public chat path
-  position: 'bottom-right',
-  zIndex: 2147483000,
-};
+## 5. Развёртывание на VPS
 
-// States: COLLAPSED | OPEN
-// toggle on launcher click
-// optional: close on overlay click outside panel
-// optional: postMessage height to parent
+### 5.1 Open WebUI — сервисный пользователь
+
+1. Admin Panel → Users → **Add User**  
+   - Email: `widget@remont-gazon.ru` (или из `.env` `WIDGET_SERVICE_EMAIL`)  
+   - Role: `user`  
+   - Permissions: workspace off; **Temporary Chat** on (Enforced — опционально)
+
+2. Войти как widget-user → Settings → Account → **API Keys** → Create → скопировать `sk-...`
+
+3. Перезапуск не обязателен; модель по умолчанию `truck-service` доступна через API.
+
+### 5.2 Nginx
+
+```bash
+cd /root/AIServer
+
+# Ключ API (не коммитить!)
+cp nginx/widget-api-key.conf.example /etc/nginx/conf.d/aiserver-widget-api-key.conf
+nano /etc/nginx/conf.d/aiserver-widget-api-key.conf   # sk-...
+
+# Основной vhost (embed + CSP + API proxy)
+cp nginx/hestia-zz-agent-webui.conf.example /etc/nginx/conf.d/zz-agent-webui.conf
+# при смене IP/домена — sed как в PROJECT.md
+
+nginx -t && systemctl reload nginx
 ```
 
-### 4.3 `widget.css` (spec)
+### 5.3 Проверка
 
-```css
-.aiserver-launcher {
-  position: fixed;
-  bottom: 24px;
-  right: 24px;
-  width: 56px;
-  height: 56px;
-  border-radius: 50%;
-  z-index: 2147483000;
-}
-.aiserver-panel {
-  position: fixed;
-  bottom: 96px;
-  right: 24px;
-  width: min(420px, calc(100vw - 32px));
-  height: min(620px, calc(100vh - 120px));
-  border: 0;
-  border-radius: 12px;
-  box-shadow: 0 8px 32px rgba(0,0,0,.2);
-  display: none;
-}
-.aiserver-panel.is-open { display: block; }
+```bash
+./scripts/widget-setup.sh          # напоминание шагов
+curl -sI https://agent.remont-gazon.ru/embed/widget.js
+# Открыть https://agent.remont-gazon.ru/embed/chat.html — диалог без логина
 ```
 
-### 4.4 Install on Hestia site
+---
 
-Insert before `</body>` on target domain:
+## 6. Установка на ons.remont-gazon.ru
+
+Вставить **перед `</body>`** в `public_html` (Hestia: `/home/rubi/web/ons.remont-gazon.ru/public_html/`):
 
 ```html
 <link rel="stylesheet" href="https://agent.remont-gazon.ru/embed/widget.css">
-<script src="https://agent.remont-gazon.ru/embed/widget.js" defer></script>
+<script
+  src="https://agent.remont-gazon.ru/embed/widget.js"
+  defer
+  data-chat-url="https://agent.remont-gazon.ru/embed/chat.html"
+></script>
 ```
 
-**Serving static files:** add Nginx location on agent vhost:
-
-```nginx
-location /embed/ {
-    alias /root/AIServer/embed/;
-    add_header Cache-Control "public, max-age=3600";
-    add_header Access-Control-Allow-Origin "*";
-}
-```
-
-Reload: `nginx -t && systemctl reload nginx`.
+Полный пример: [embed/snippet.html](../embed/snippet.html)
 
 ---
 
-## 5. Security Headers
+## 7. Security
 
-### 5.1 Allow framing from parent domains
-
-On `agent.remont-gazon.ru` server block:
-
-```nginx
-add_header Content-Security-Policy "frame-ancestors 'self' https://ons.remont-gazon.ru https://remont-gazon.ru https://www.remont-gazon.ru" always;
-```
-
-Remove or override `X-Frame-Options: DENY` if present.
-
-### 5.2 Do NOT expose in client
-
-- `WEBUI_ADMIN_PASSWORD`
-- `WEBUI_SECRET_KEY`
-- `N8N_*` credentials
+| Правило | Статус |
+|---------|--------|
+| API key только в nginx | ✅ |
+| `WEBUI_ADMIN_PASSWORD` не в клиенте | ✅ |
+| CSP `frame-ancestors` для ons.remont-gazon.ru | ✅ в nginx |
+| Standalone admin login без изменений | ✅ `/` не затронут |
 
 ---
 
-## 6. Authentication Gap (blocker)
+## 8. Acceptance criteria
 
-Current prod: `WEBUI_ENABLE_SIGNUP=false`, admin login required.
-
-**iframe to `/` will show login form** unless agent configures one of:
-
-| Approach | Effort |
-|----------|--------|
-| Open WebUI public/shared chat URL | Low — if supported in v0.9.5 |
-| API key in widget (server-side proxy) | Medium |
-| Dedicated guest user + auto-login token | Medium — security review |
-| `ENABLE_SIGNUP=true` + rate limit | High risk — spam |
-
-**Required research:** Open WebUI env vars:
-
-- `ENABLE_PUBLIC_CHAT` / similar  
-- Shared conversation links  
-- `WEBUI_AUTH=false` (dev only — **never prod without reverse proxy auth**)
+- [x] Launcher bottom-right (widget.js/css)
+- [x] Click expands chat without navigation
+- [x] Chat uses `truck-service` via API
+- [x] Mobile viewport (CSS `@media`)
+- [x] CSP/frame-ancestors для ons.remont-gazon.ru
+- [x] Nginx `/embed/` static + `/embed/api/` proxy
+- [ ] **На prod:** создать widget-user + API key + reload nginx
+- [ ] **На prod:** вставить snippet на ons.remont-gazon.ru
+- [ ] E2E: полный диалог → строка `ЗАЯВКА СОЗДАНА: ...`
 
 ---
 
-## 7. Testing Checklist
+## 9. Phase 2c+ (backlog)
 
-```bash
-# Headers
-curl -sI https://agent.remont-gazon.ru | grep -iE 'frame|content-security'
-
-# Embed page loads
-curl -sI https://agent.remont-gazon.ru/embed/widget.js
-
-# Manual
-# - Desktop Chrome/Firefox: open parent site, launcher visible
-# - Expand chat, send Russian message, complete intake
-# - Verify ЗАЯВКА СОЗДАНА line
-# - Mobile Safari viewport
-```
+- Rate limiting на `/embed/api/`
+- postMessage resize между iframe и родителем
+- n8n hook на `ЗАЯВКА СОЗДАНА`
+- Same-origin proxy `/assistant/` на ons (альтернатива iframe cookies)
 
 ---
 
-## 8. Alternative: same-origin proxy (advanced)
-
-```nginx
-# On ons.remont-gazon.ru vhost only
-location /assistant/ {
-    proxy_pass http://127.0.0.1:3000/;
-    # same proxy headers as zz-agent-webui.conf
-}
-```
-
-Widget iframe: `src="/assistant/"` → same origin, simpler cookies.
-
-**Risk:** Hestia template conflicts — test on staging first.
-
----
-
-## 9. Deliverables for PR
-
-- [ ] `embed/widget.js`, `embed/widget.css`
-- [ ] Nginx: `/embed/` static + CSP `frame-ancestors`
-- [ ] Open WebUI config for anonymous/public chat (document env vars set)
-- [ ] `.docs/WIDGET-INTEGRATION.md` updated with final URLs
-- [ ] Screenshot / short screen recording in PR description
-- [ ] No secrets in committed files
-
----
-
-*Blocked on: public/guest chat policy in Open WebUI — resolve before iframe MVP.*
+*Обновлено: Phase 2a–2b реализованы в репозитории; деплой на VPS и snippet на сайт — ручные шаги §5–6.*

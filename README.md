@@ -32,6 +32,10 @@ AIServer/
 │   ├── PROJECT.md              ← для людей (история, ошибки)
 │   ├── AGENT-CONTEXT.md        ← для ИИ-агентов (техспека)
 │   └── WIDGET-INTEGRATION.md   ← виджет на сайт (Phase 2)
+├── embed/                      ← widget + public chat UI
+│   ├── widget.js, widget.css
+│   ├── chat.html, chat.js, chat.css
+│   └── snippet.html
 ├── docker-compose.yml
 ├── .env.example
 ├── prompts/truck-service-system.txt
@@ -50,6 +54,7 @@ AIServer/
 | `./scripts/model-pull.sh` | Скачать модель |
 | `./scripts/model-create.sh` | Собрать `truck-service` |
 | `./scripts/reset-webui.sh` | Сброс Open WebUI |
+| `./scripts/widget-setup.sh` | Настройка embed-виджета на VPS |
 
 ---
 
@@ -70,7 +75,7 @@ AIServer/
 |----------|-----------|
 | [.docs/PROJECT.md](.docs/PROJECT.md) | Люди: история, ошибки, Hestia, runbook |
 | [.docs/AGENT-CONTEXT.md](.docs/AGENT-CONTEXT.md) | **ИИ-агенты:** архитектура, инварианты, API |
-| [.docs/WIDGET-INTEGRATION.md](.docs/WIDGET-INTEGRATION.md) | Виджет чата на сайт (Phase 2, planned) |
+| [.docs/WIDGET-INTEGRATION.md](.docs/WIDGET-INTEGRATION.md) | Виджет чата на `ons.remont-gazon.ru` |
 
 ---
 

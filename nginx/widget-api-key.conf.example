@@ -1,0 +1,9 @@
+# API-ключ сервисного пользователя виджета (Open WebUI → Settings → Account → API Keys).
+# НЕ коммитьте реальный ключ. На сервере:
+#   cp nginx/widget-api-key.conf.example /etc/nginx/conf.d/aiserver-widget-api-key.conf
+#   nano /etc/nginx/conf.d/aiserver-widget-api-key.conf
+#   nginx -t && systemctl reload nginx
+
+map $host $widget_api_key {
+    default "REPLACE_WITH_OPEN_WEBUI_API_KEY";
+}

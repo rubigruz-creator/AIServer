@@ -1,0 +1,20 @@
+<!--
+  Установка виджета на ons.remont-gazon.ru (или другой сайт)
+  Вставьте перед закрывающим </body> в index.html / шаблоне CMS.
+-->
+<link rel="stylesheet" href="https://agent.remont-gazon.ru/embed/widget.css">
+<script
+  src="https://agent.remont-gazon.ru/embed/widget.js"
+  defer
+  data-chat-url="https://agent.remont-gazon.ru/embed/chat.html"
+></script>
+
+<!-- Опционально: переопределение через глобальный объект (до widget.js) -->
+<!--
+<script>
+  window.AIServerWidget = {
+    chatUrl: 'https://agent.remont-gazon.ru/embed/chat.html',
+    title: 'Чат с администратором автосервиса',
+  };
+</script>
+-->

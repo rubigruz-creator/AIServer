@@ -11,7 +11,7 @@
 1. **Do not break production invariants** listed in §8.
 2. **Single source of truth for LLM behavior:** `prompts/truck-service-system.txt` → rebuild via `scripts/model-create.sh`.
 3. **HestiaCP is present** on the VPS; Nginx for this domain is **not** managed only by repo files — live config is `/etc/nginx/conf.d/zz-agent-webui.conf`.
-4. **Next planned feature:** floating website chat widget (bottom-right) on `remont-gazon.ru` — spec in §12.
+4. **Next planned feature:** floating website chat widget — **implemented in `embed/`** (see [WIDGET-INTEGRATION.md](./WIDGET-INTEGRATION.md)); prod deploy + snippet on `ons.remont-gazon.ru` pending.
 5. Secrets live in `.env` (gitignored); never commit credentials.
 
 ---
@@ -354,10 +354,15 @@ AIServer/
   embed/
     widget.js          # launcher UI, toggle iframe
     widget.css
-    install.html       # copy-paste snippet for Hestia public_html
+    chat.html, chat.js, chat.css   # public chat UI (API via nginx)
+    snippet.html       # copy-paste snippet for Hestia public_html
+  nginx/
+    widget-api-key.conf.example
   .docs/
     WIDGET-INTEGRATION.md   # step-by-step for site owner
 ```
+
+**Status:** created in Phase 2b.
 
 ### 12.5 Parent site install snippet (target)
 
@@ -435,4 +440,4 @@ AIServer/
 
 ---
 
-*Last updated: production chat live at `https://agent.remont-gazon.ru`, widget not implemented.*
+*Last updated: embed widget Phase 2b in repo; prod nginx + ons.remont-gazon.ru snippet pending.*
