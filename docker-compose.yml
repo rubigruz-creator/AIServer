@@ -70,7 +70,7 @@ services:
     volumes:
       - intake_data:/data
     ports:
-      - "127.0.0.1:3100:3100"
+      - "127.0.0.1:3101:3100"
 
   # n8n — опционально (docker compose --profile automation up -d)
   n8n:

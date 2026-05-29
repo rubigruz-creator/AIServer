@@ -99,7 +99,7 @@ curl -s -o /dev/null -w "  embed/chat.html     → HTTP %{http_code}\n" \
 curl -s -o /dev/null -w "  Open WebUI local    → HTTP %{http_code}\n" \
   "http://127.0.0.1:3000/" || true
 curl -s -o /dev/null -w "  intake-api health   → HTTP %{http_code}\n" \
-  "http://127.0.0.1:3100/health" || true
+  "http://127.0.0.1:3101/health" || true
 
 echo ""
 echo "==> Готово."

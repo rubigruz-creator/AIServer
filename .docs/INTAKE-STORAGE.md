@@ -1,6 +1,6 @@
 # Хранение диалогов и заявок (Intake API)
 
-> **Сервис:** `intake-api` (Docker, порт `127.0.0.1:3100`)  
+> **Сервис:** `intake-api` (Docker, порт `127.0.0.1:3101` → контейнер `3100`)  
 > **Админ-страница:** https://agent.remont-gazon.ru/intake/admin  
 > **БД:** SQLite в volume `intake_data` → `/data/intake.db`
 
@@ -50,7 +50,7 @@ cp -f embed/* /var/www/aiserver/embed/
 Проверка:
 
 ```bash
-curl -s http://127.0.0.1:3100/health
+curl -s http://127.0.0.1:3101/health
 # {"status":"ok"}
 ```
 
