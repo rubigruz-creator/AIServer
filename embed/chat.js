@@ -5,12 +5,14 @@
   var INTAKE_API = '/intake/api';
   var SESSION_KEY = 'aiserver_session_id';
   var MODEL = 'truck-service:latest';
+  var KEEP_ALIVE = '30m';
   var messagesEl = document.getElementById('messages');
   var inputEl = document.getElementById('input');
   var sendBtn = document.getElementById('send');
   var closeBtn = document.getElementById('close');
   var history = [];
   var busy = false;
+  var warmupStarted = false;
 
   function getSessionId() {
     var id = localStorage.getItem(SESSION_KEY);
@@ -23,6 +25,20 @@
       localStorage.setItem(SESSION_KEY, id);
     }
     return id;
+  }
+
+  function logMessage(role, content) {
+    fetch(INTAKE_API + '/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        session_id: getSessionId(),
+        role: role,
+        content: content,
+      }),
+    }).catch(function (err) {
+      console.warn('[AIServer intake] message', err);
+    });
   }
 
   async function ensureSession() {
@@ -41,20 +57,26 @@
     }
   }
 
-  async function logMessage(role, content) {
-    try {
-      await fetch(INTAKE_API + '/messages', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          session_id: getSessionId(),
-          role: role,
-          content: content,
-        }),
-      });
-    } catch (err) {
-      console.warn('[AIServer intake] message', err);
+  /** Фоновый прогрев: модель остаётся в RAM до первого сообщения пользователя */
+  function warmupModel() {
+    if (warmupStarted) {
+      return;
     }
+    warmupStarted = true;
+    fetch(API_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: MODEL,
+        stream: false,
+        keep_alive: KEEP_ALIVE,
+        messages: [{ role: 'user', content: '.' }],
+        options: { num_predict: 1 },
+      }),
+    }).catch(function (err) {
+      console.warn('[AIServer chat] warmup', err);
+      warmupStarted = false;
+    });
   }
 
   function appendMessage(role, text) {
@@ -83,13 +105,22 @@
     }
   }
 
+  function chatRequestBody(messages) {
+    return {
+      model: MODEL,
+      stream: true,
+      keep_alive: KEEP_ALIVE,
+      messages: messages,
+    };
+  }
+
   async function streamAssistantReply(userText) {
     history.push({ role: 'user', content: userText });
 
     var assistantEl = appendMessage('assistant', '');
     var typingEl = document.createElement('div');
     typingEl.className = 'typing';
-    typingEl.textContent = 'Печатает…';
+    typingEl.textContent = 'Секунду, готовлю ответ…';
     messagesEl.appendChild(typingEl);
     messagesEl.scrollTop = messagesEl.scrollHeight;
 
@@ -99,11 +130,7 @@
       var response = await fetch(API_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          model: MODEL,
-          stream: true,
-          messages: history,
-        }),
+        body: JSON.stringify(chatRequestBody(history)),
       });
 
       if (!response.ok) {
@@ -120,11 +147,10 @@
         throw new Error('Streaming не поддерживается браузером');
       }
 
-      typingEl.remove();
-
       var reader = response.body.getReader();
       var decoder = new TextDecoder();
       var buffer = '';
+      var firstToken = false;
 
       while (true) {
         var readResult = await reader.read();
@@ -147,6 +173,12 @@
             delta = chunk.message.content;
           }
           if (delta) {
+            if (!firstToken) {
+              firstToken = true;
+              if (typingEl.parentNode) {
+                typingEl.remove();
+              }
+            }
             assistantText += delta;
             assistantEl.textContent = assistantText;
             messagesEl.scrollTop = messagesEl.scrollHeight;
@@ -154,11 +186,16 @@
         }
       }
 
+      if (typingEl.parentNode) {
+        typingEl.remove();
+      }
+
       if (!assistantText) {
-        assistantEl.textContent = 'Извините, не удалось получить ответ. Попробуйте ещё раз.';
+        assistantEl.textContent =
+          'Извините, не удалось получить ответ. Попробуйте ещё раз.';
       } else {
         history.push({ role: 'assistant', content: assistantText });
-        await logMessage('assistant', assistantText);
+        logMessage('assistant', assistantText);
       }
     } catch (err) {
       if (typingEl.parentNode) {
@@ -181,7 +218,7 @@
 
     inputEl.value = '';
     appendMessage('user', text);
-    await logMessage('user', text);
+    logMessage('user', text);
     setBusy(true);
     await streamAssistantReply(text);
     setBusy(false);
@@ -211,5 +248,6 @@
   ensureSession().then(function () {
     appendMessage('system', welcomeText);
     logMessage('system', welcomeText);
+    warmupModel();
   });
 })();

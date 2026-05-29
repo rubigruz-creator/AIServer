@@ -87,6 +87,10 @@ if command -v docker >/dev/null 2>&1 && [[ -f docker-compose.yml ]]; then
   docker compose build intake-api 2>/dev/null || true
   echo "==> docker compose up -d (ollama, open-webui, intake-api)..."
   docker compose up -d ollama open-webui intake-api 2>/dev/null || docker compose up -d
+  if [[ -x "$SCRIPT_DIR/model-warmup.sh" ]]; then
+    echo "==> Прогрев модели Ollama..."
+    "$SCRIPT_DIR/model-warmup.sh" || true
+  fi
 fi
 
 # --- 6. Проверки ---

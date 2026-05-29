@@ -14,6 +14,8 @@ services:
       - "127.0.0.1:11434:11434"
     environment:
       - TZ=${TZ:-Europe/Moscow}
+      # Держать модель в RAM между запросами (см. .env OLLAMA_KEEP_ALIVE)
+      - OLLAMA_KEEP_ALIVE=${OLLAMA_KEEP_ALIVE:-30m}
     # Раскомментируйте блок ниже, если на сервере есть NVIDIA GPU:
     # deploy:
     #   resources:

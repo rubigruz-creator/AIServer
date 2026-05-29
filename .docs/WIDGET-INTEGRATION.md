@@ -75,7 +75,20 @@ scripts/widget-setup.sh               # пошаговая настройка н
 
 ---
 
-## 5. Развёртывание на VPS
+## 5. Скорость первого ответа
+
+| Механизм | Где |
+|----------|-----|
+| `OLLAMA_KEEP_ALIVE=30m` | `.env` + `docker-compose.yml` — модель не выгружается из RAM |
+| `./scripts/model-warmup.sh` | после `stack.sh start` / `widget-deploy.sh` |
+| Прогрев в браузере | `embed/chat.js` — тихий запрос при открытии чата |
+| Параллельный intake | `logMessage` не блокирует запрос к Ollama |
+
+На VPS после обновления: `docker compose up -d ollama` и `./scripts/model-warmup.sh`, затем `cp embed/* /var/www/aiserver/embed/`.
+
+---
+
+## 6. Развёртывание на VPS (deploy)
 
 **Автоматический скрипт** (на сервере после `git pull`):
 
@@ -89,7 +102,7 @@ chmod +x scripts/*.sh
 
 Репозиторий: https://github.com/rubigruz-creator/AIServer
 
-### 5.1 Open WebUI — сервисный пользователь
+### 6.1 Open WebUI — сервисный пользователь
 
 1. Admin Panel → Users → **Add User**  
    - Email: `widget@remont-gazon.ru` (или из `.env` `WIDGET_SERVICE_EMAIL`)  
@@ -100,7 +113,7 @@ chmod +x scripts/*.sh
 
 3. Перезапуск не обязателен; модель по умолчанию `truck-service` доступна через API.
 
-### 5.2 Nginx
+### 6.2 Nginx
 
 ```bash
 cd /root/AIServer
@@ -116,7 +129,7 @@ cp nginx/hestia-zz-agent-webui.conf.example /etc/nginx/conf.d/zz-agent-webui.con
 nginx -t && systemctl reload nginx
 ```
 
-### 5.3 Проверка
+### 6.3 Проверка
 
 ```bash
 ./scripts/widget-setup.sh          # напоминание шагов
@@ -126,7 +139,7 @@ curl -sI https://agent.remont-gazon.ru/embed/widget.js
 
 ---
 
-## 6. Установка на ons.remont-gazon.ru
+## 7. Установка на ons.remont-gazon.ru
 
 Вставить **перед `</body>`** в `public_html` (Hestia: `/home/rubi/web/ons.remont-gazon.ru/public_html/`):
 
@@ -143,7 +156,7 @@ curl -sI https://agent.remont-gazon.ru/embed/widget.js
 
 ---
 
-## 7. Security
+## 8. Security
 
 | Правило | Статус |
 |---------|--------|
@@ -154,7 +167,7 @@ curl -sI https://agent.remont-gazon.ru/embed/widget.js
 
 ---
 
-## 8. Acceptance criteria
+## 9. Acceptance criteria
 
 - [x] Launcher bottom-right (widget.js/css)
 - [x] Click expands chat without navigation
@@ -168,7 +181,7 @@ curl -sI https://agent.remont-gazon.ru/embed/widget.js
 
 ---
 
-## 9. Phase 2c+ (backlog)
+## 10. Phase 2c+ (backlog)
 
 - Rate limiting на `/embed/api/`
 - postMessage resize между iframe и родителем

@@ -17,6 +17,9 @@ case "$CMD" in
     echo "==> Стек запущен. Локально: http://127.0.0.1:3000"
     echo "==> Публично: https://\${DOMAIN} (см. .env)"
     docker compose ps
+    if [[ -x "$SCRIPT_DIR/model-warmup.sh" ]]; then
+      "$SCRIPT_DIR/model-warmup.sh" || true
+    fi
     ;;
   stop)
     docker compose down

@@ -55,6 +55,7 @@ AIServer/
 | `./scripts/stack.sh start\|stop\|status` | Docker-стек |
 | `./scripts/model-pull.sh` | Скачать модель |
 | `./scripts/model-create.sh` | Собрать `truck-service` |
+| `./scripts/model-warmup.sh` | Прогрев модели в RAM (быстрее первый ответ) |
 | `./scripts/reset-webui.sh` | Сброс Open WebUI |
 | `./scripts/widget-setup.sh` | Справка по настройке виджета |
 | `./scripts/widget-deploy.sh` | Деплой виджета + intake-api на VPS |
