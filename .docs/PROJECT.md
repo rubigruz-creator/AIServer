@@ -7,7 +7,8 @@
 Этот документ описывает архитектуру, историю развёртывания, все проблемы и их решения. Цель — чтобы новый разработчик мог продолжить работу без перебора переписки.
 
 **Для ИИ-агентов (технический контекст):** [.docs/AGENT-CONTEXT.md](./AGENT-CONTEXT.md)  
-**Следующая задача (виджет на сайт):** [.docs/WIDGET-INTEGRATION.md](./WIDGET-INTEGRATION.md)
+**Виджет на сайтах:** [.docs/WIDGET-SITES.md](./WIDGET-SITES.md) (код для вставки) · [.docs/WIDGET-INTEGRATION.md](./WIDGET-INTEGRATION.md)  
+**Диалоги и заявки:** [.docs/INTAKE-STORAGE.md](./INTAKE-STORAGE.md)
 
 ---
 
@@ -37,8 +38,11 @@
 | HTTPS `https://agent.remont-gazon.ru` | ✅ |
 | Nginx прокси на Open WebUI | ✅ |
 | `WEBUI_URL` в docker-compose | ✅ (на сервере добавлено вручную) |
-| n8n (автоматизация заявок) | ⬜ не настроен |
-| Telegram/email при «ЗАЯВКА СОЗДАНА» | ⬜ не настроен |
+| Embed-виджет (чат на сайтах) | ✅ см. [WIDGET-SITES.md](./WIDGET-SITES.md) |
+| Intake API (диалоги, `/intake/admin`) | ✅ |
+| Сайты с виджетом (CSP в nginx) | gortruck.ru, service-ref.ru, refmontaj.ru, ons/remont-gazon.ru |
+| n8n / MAX / Telegram при заявке | ⬜ webhook готов (`INTAKE_WEBHOOK_URL`) |
+| Анимация и UI виджета | ⬜ следующий этап |
 
 ### Продакшен-параметры
 

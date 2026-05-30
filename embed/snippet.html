@@ -1,6 +1,12 @@
 <!--
-  Установка виджета на ons.remont-gazon.ru (или другой сайт)
-  Вставьте перед закрывающим </body> в index.html / шаблоне CMS.
+  Виджет ИИ-администратора грузового автосервиса
+  Один и тот же код для всех сайтов (промпт и модель общие).
+
+  Сайты: gortruck.ru, service-ref.ru, refmontaj.ru,
+         ons.remont-gazon.ru, remont-gazon.ru
+
+  Вставьте перед </body> в index.html / шаблон CMS / footer.
+  Подробно: .docs/WIDGET-SITES.md
 -->
 <link rel="stylesheet" href="https://agent.remont-gazon.ru/embed/widget.css">
 <script
@@ -9,11 +15,10 @@
   data-chat-url="https://agent.remont-gazon.ru/embed/chat.html"
 ></script>
 
-<!-- Опционально: переопределение через глобальный объект (до widget.js) -->
+<!-- Опционально: заголовок кнопки (раскомментируйте и поставьте ПЕРЕД widget.js) -->
 <!--
 <script>
   window.AIServerWidget = {
-    chatUrl: 'https://agent.remont-gazon.ru/embed/chat.html',
     title: 'Чат с администратором автосервиса',
   };
 </script>

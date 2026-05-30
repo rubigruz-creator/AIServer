@@ -11,7 +11,7 @@
 1. **Do not break production invariants** listed in §8.
 2. **Single source of truth for LLM behavior:** `prompts/truck-service-system.txt` → rebuild via `scripts/model-create.sh`.
 3. **HestiaCP is present** on the VPS; Nginx for this domain is **not** managed only by repo files — live config is `/etc/nginx/conf.d/zz-agent-webui.conf`.
-4. **Next planned feature:** floating website chat widget — **implemented in `embed/`** (see [WIDGET-INTEGRATION.md](./WIDGET-INTEGRATION.md)); prod deploy + snippet on `ons.remont-gazon.ru` pending.
+4. **Website widget:** implemented in `embed/`; multisite via CSP — see [WIDGET-SITES.md](./WIDGET-SITES.md), [WIDGET-INTEGRATION.md](./WIDGET-INTEGRATION.md). Intake: [INTAKE-STORAGE.md](./INTAKE-STORAGE.md).
 5. Secrets live in `.env` (gitignored); never commit credentials.
 
 ---
@@ -58,16 +58,17 @@ DNS A: agent.remont-gazon.ru → 90.156.171.36
   │
   ▼
 nginx (host, /etc/nginx/conf.d/zz-agent-webui.conf)
-  listen 90.156.171.36:443 ssl   # IP-bound listen required on Hestia VPS
-  proxy_pass → 127.0.0.1:3000
+  listen VPS_IP:443 ssl
+  /              → 127.0.0.1:3000 (Open WebUI admin)
+  /embed/        → static /var/www/aiserver/embed + /embed/ollama/chat → Ollama
+  /intake/       → 127.0.0.1:3101 (intake-api)
   │
-  ▼
-container: open-webui (127.0.0.1:3000→8080)
-  OLLAMA_BASE_URL=http://ollama:11434
-  │
-  ▼
-container: ollama (127.0.0.1:11434)
-  model: truck-service:latest
+  ├─► open-webui (127.0.0.1:3000→8080)
+  ├─► ollama (127.0.0.1:11434) — truck-service:latest
+  └─► intake-api (127.0.0.1:3101) — SQLite dialogs
+
+Parent sites (iframe): gortruck.ru, service-ref.ru, refmontaj.ru,
+  ons.remont-gazon.ru, remont-gazon.ru — see nginx/frame-ancestors.snippet
 ```
 
 | Endpoint | Bind | Exposure |
@@ -116,6 +117,7 @@ container: ollama (127.0.0.1:11434)
 |---------|-------|---------|-----------|
 | `ollama` | `ollama/ollama:latest` | default | `127.0.0.1:11434` |
 | `open-webui` | `ghcr.io/open-webui/open-webui:main` | default | `127.0.0.1:3000→8080` |
+| `intake-api` | build `./services/intake-api` | default | `127.0.0.1:3101→3100` |
 | `n8n` | `n8nio/n8n:latest` | `automation` | `127.0.0.1:5678` |
 
 ### Critical `open-webui` environment variables
@@ -263,11 +265,13 @@ Uncomment `deploy.resources.reservations` in `ollama` service if NVIDIA availabl
 
 ---
 
-## 12. NEXT FEATURE: Website Floating Chat Widget
+## 12. Website Floating Chat Widget (IMPLEMENTED)
 
-**Goal:** Embed AI assistant on main business website (e.g. `remont-gazon.ru` or `ons.remont-gazon.ru`) as a **collapsed launcher bottom-right**, expanding to chat panel — standard SaaS widget UX.
+**Status:** Production. Static assets in `embed/`; chat via `/embed/ollama/chat`; logs in `intake-api`.
 
-**Backend (already exists):** `https://agent.remont-gazon.ru` → Open WebUI + `truck-service`.
+**Multisite:** same snippet on all parent domains; nginx `frame-ancestors` whitelist — [WIDGET-SITES.md](./WIDGET-SITES.md).
+
+**Backend:** `https://agent.remont-gazon.ru` → Ollama `truck-service` + intake SQLite.
 
 ### 12.1 Constraints
 
@@ -375,13 +379,11 @@ AIServer/
 
 ### 12.6 Acceptance criteria
 
-- [ ] Launcher visible bottom-right on target website  
-- [ ] Click expands chat without navigating away  
-- [ ] Chat uses `truck-service` behavior (Russian intake dialog)  
-- [ ] Successful completion emits `ЗАЯВКА СОЗДАНА: ...` line  
-- [ ] Works on mobile viewport  
-- [ ] No regression to standalone `https://agent.remont-gazon.ru` admin access  
-- [ ] CSP/XFO do not block embedding in prod browsers  
+- [x] Launcher + iframe chat (`embed/`)
+- [x] `truck-service` + intake storage
+- [x] CSP for gortruck.ru, service-ref.ru, refmontaj.ru, remont-gazon.ru, ons
+- [ ] Snippet on each target site (owner paste)
+- [ ] VPS nginx reloaded after CSP update
 
 ---
 
@@ -400,6 +402,9 @@ AIServer/
 | `WEBUI_ADMIN_NAME` | string | no | `Администратор` |
 | `ENABLE_PERSISTENT_CONFIG` | bool string | no | `false` |
 | `N8N_*` | various | if profile automation | — |
+| `OLLAMA_KEEP_ALIVE` | duration | no | `30m` |
+| `INTAKE_ADMIN_*` | string | intake admin | — |
+| `INTAKE_WEBHOOK_URL` | URL | optional n8n/MAX | — |
 | `TZ` | timezone | no | `Europe/Moscow` |
 
 ---
@@ -440,4 +445,4 @@ AIServer/
 
 ---
 
-*Last updated: embed widget Phase 2b in repo; prod nginx + ons.remont-gazon.ru snippet pending.*
+*Last updated: multisite widget (gortruck, service-ref, refmontaj), intake-api, Ollama keep_alive.*

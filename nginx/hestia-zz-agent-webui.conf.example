@@ -8,6 +8,9 @@
 #
 # ВАЖНО: listen по IP VPS (как у Hestia), иначе запросы уйдут в заглушку «Coming Soon».
 # Не используйте Rebuild домена в Hestia для agent.* — перезапишет конфиги.
+#
+# Сайты, которым разрешено встраивать чат (iframe): см. nginx/frame-ancestors.snippet
+# и .docs/WIDGET-SITES.md
 
 # Подключается на уровне http {}; файл создаётся на сервере с реальным ключом.
 include /etc/nginx/conf.d/aiserver-widget-api-key.conf;
@@ -75,7 +78,7 @@ server {
         alias /var/www/aiserver/embed/;
         add_header Cache-Control "public, max-age=3600";
         add_header Access-Control-Allow-Origin "*";
-        add_header Content-Security-Policy "frame-ancestors 'self' https://ons.remont-gazon.ru https://remont-gazon.ru https://www.remont-gazon.ru" always;
+        add_header Content-Security-Policy "frame-ancestors 'self' https://ons.remont-gazon.ru https://remont-gazon.ru https://www.remont-gazon.ru https://gortruck.ru https://www.gortruck.ru https://service-ref.ru https://www.service-ref.ru https://refmontaj.ru https://www.refmontaj.ru" always;
     }
 
     location / {
@@ -91,7 +94,7 @@ server {
         proxy_send_timeout 300s;
 
         # Разрешить встраивание Open WebUI только с доверенных сайтов (если iframe на /)
-        add_header Content-Security-Policy "frame-ancestors 'self' https://ons.remont-gazon.ru https://remont-gazon.ru https://www.remont-gazon.ru" always;
+        add_header Content-Security-Policy "frame-ancestors 'self' https://ons.remont-gazon.ru https://remont-gazon.ru https://www.remont-gazon.ru https://gortruck.ru https://www.gortruck.ru https://service-ref.ru https://www.service-ref.ru https://refmontaj.ru https://www.refmontaj.ru" always;
         proxy_hide_header X-Frame-Options;
     }
 }

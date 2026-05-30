@@ -31,7 +31,8 @@ AIServer/
 ├── .docs/
 │   ├── PROJECT.md              ← для людей (история, ошибки)
 │   ├── AGENT-CONTEXT.md        ← для ИИ-агентов (техспека)
-│   ├── WIDGET-INTEGRATION.md   ← виджет на сайт (Phase 2)
+│   ├── WIDGET-INTEGRATION.md   ← виджет: архитектура, деплой
+│   ├── WIDGET-SITES.md         ← код для сайтов (multisite)
 │   └── INTAKE-STORAGE.md       ← диалоги, заявки, админ, webhook
 ├── services/intake-api/        ← SQLite + API + /intake/admin
 ├── embed/                      ← widget + public chat UI
@@ -79,7 +80,8 @@ AIServer/
 |----------|-----------|
 | [.docs/PROJECT.md](.docs/PROJECT.md) | Люди: история, ошибки, Hestia, runbook |
 | [.docs/AGENT-CONTEXT.md](.docs/AGENT-CONTEXT.md) | **ИИ-агенты:** архитектура, инварианты, API |
-| [.docs/WIDGET-INTEGRATION.md](.docs/WIDGET-INTEGRATION.md) | Виджет чата на `ons.remont-gazon.ru` |
+| [.docs/WIDGET-SITES.md](.docs/WIDGET-SITES.md) | **Вставка виджета** на gortruck.ru, service-ref.ru, refmontaj.ru и др. |
+| [.docs/WIDGET-INTEGRATION.md](.docs/WIDGET-INTEGRATION.md) | Архитектура виджета, nginx, деплой |
 | [.docs/INTAKE-STORAGE.md](.docs/INTAKE-STORAGE.md) | Хранение диалогов, админ, webhook для n8n/MAX |
 | [.docs/GITHUB-PUBLISH.md](.docs/GITHUB-PUBLISH.md) | Публикация на GitHub (push, 403, безопасность) |
 
