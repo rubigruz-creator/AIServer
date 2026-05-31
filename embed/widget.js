@@ -1,6 +1,7 @@
 (function () {
   'use strict';
 
+  var ROOT_ID = 'aiserver-widget-root';
   var script = document.currentScript;
   var defaults = {
     chatUrl: 'https://agent.remont-gazon.ru/embed/chat.html',
@@ -16,25 +17,29 @@
     if (script.dataset.zIndex) config.zIndex = parseInt(script.dataset.zIndex, 10);
   }
 
-  if (document.getElementById('aiserver-widget-root')) {
+  if (document.getElementById(ROOT_ID)) {
     return;
   }
 
   var root = document.createElement('div');
-  root.id = 'aiserver-widget-root';
+  root.id = ROOT_ID;
   root.className = 'aiserver-widget';
+  root.setAttribute('data-aiserver-widget', '1');
 
   var backdrop = document.createElement('div');
+  backdrop.id = 'aiserver-widget-backdrop';
   backdrop.className = 'aiserver-backdrop';
   backdrop.setAttribute('aria-hidden', 'true');
 
   var panelWrap = document.createElement('div');
+  panelWrap.id = 'aiserver-widget-panel-wrap';
   panelWrap.className = 'aiserver-panel-wrap';
   panelWrap.setAttribute('role', 'dialog');
   panelWrap.setAttribute('aria-label', config.title);
   panelWrap.setAttribute('aria-hidden', 'true');
 
   var iframe = document.createElement('iframe');
+  iframe.id = 'aiserver-widget-iframe';
   iframe.className = 'aiserver-panel';
   iframe.src = config.chatUrl;
   iframe.title = config.title;
@@ -42,6 +47,7 @@
   iframe.setAttribute('allow', 'microphone');
 
   var launcher = document.createElement('button');
+  launcher.id = 'aiserver-widget-launcher';
   launcher.type = 'button';
   launcher.className = 'aiserver-launcher';
   launcher.setAttribute('aria-label', 'Открыть чат с администратором');

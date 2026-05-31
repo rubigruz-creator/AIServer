@@ -27,9 +27,9 @@ https://agent.remont-gazon.ru/intake/admin
 Вставьте **перед `</body>`** в шаблоне / `index.html` / footer CMS:
 
 ```html
-<link rel="stylesheet" href="https://agent.remont-gazon.ru/embed/widget.css">
+<link rel="stylesheet" href="https://agent.remont-gazon.ru/embed/widget.css?v=2">
 <script
-  src="https://agent.remont-gazon.ru/embed/widget.js"
+  src="https://agent.remont-gazon.ru/embed/widget.js?v=2"
   defer
   data-chat-url="https://agent.remont-gazon.ru/embed/chat.html"
 ></script>
@@ -75,6 +75,8 @@ nginx -t && systemctl reload nginx
 3. В админке intake появится новая сессия с `source_url` вашего домена.
 
 Если iframe пустой — откройте DevTools → Console: часто это **CSP frame-ancestors** (домен не добавлен в nginx) или блокировщик скриптов.
+
+**Стили WordPress перебивают виджет:** обновите `widget.css` / `widget.js` на сервере (см. §6). Виджет изолирован под `#aiserver-widget-root` и ID `#aiserver-widget-launcher` и др. В snippet используйте `?v=2` для сброса кэша CSS.
 
 ```bash
 # на сервере: заголовок embed-страницы

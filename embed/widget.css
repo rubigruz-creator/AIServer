@@ -1,16 +1,48 @@
-.aiserver-widget {
+/**
+ * Виджет AIServer — стили изолированы под #aiserver-widget-root.
+ * Не используйте голые классы .aiserver-* вне этого блока.
+ */
+
+#aiserver-widget-root {
   --aiserver-primary: #1a6b4a;
   --aiserver-primary-hover: #145a3d;
   --aiserver-shadow: 0 8px 32px rgba(0, 0, 0, 0.22);
+  position: static;
+  z-index: auto;
+  display: block;
+  width: auto;
+  height: auto;
+  margin: 0;
+  padding: 0;
+  border: none;
+  background: transparent;
   font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  font-size: 16px;
+  line-height: 1.4;
+  color: #1a1a1a;
+  box-sizing: border-box;
 }
 
-.aiserver-launcher {
+#aiserver-widget-root *,
+#aiserver-widget-root *::before,
+#aiserver-widget-root *::after {
+  box-sizing: border-box;
+}
+
+#aiserver-widget-launcher {
+  all: unset;
+  box-sizing: border-box;
   position: fixed;
   bottom: 24px;
   right: 24px;
   width: 56px;
   height: 56px;
+  min-width: 56px;
+  min-height: 56px;
+  max-width: 56px;
+  max-height: 56px;
+  margin: 0;
+  padding: 0;
   border: 0;
   border-radius: 50%;
   background: var(--aiserver-primary);
@@ -22,25 +54,35 @@
   align-items: center;
   justify-content: center;
   transition: transform 0.2s ease, background 0.2s ease;
+  font: inherit;
+  line-height: 1;
+  text-transform: none;
+  letter-spacing: normal;
+  appearance: none;
+  -webkit-appearance: none;
 }
 
-.aiserver-launcher:hover {
+#aiserver-widget-launcher:hover {
   background: var(--aiserver-primary-hover);
   transform: scale(1.05);
 }
 
-.aiserver-launcher:focus-visible {
+#aiserver-widget-launcher:focus-visible {
   outline: 2px solid #fff;
   outline-offset: 2px;
 }
 
-.aiserver-launcher svg {
+#aiserver-widget-launcher svg {
+  display: block;
   width: 28px;
   height: 28px;
   fill: currentColor;
+  pointer-events: none;
 }
 
-.aiserver-panel-wrap {
+#aiserver-widget-panel-wrap {
+  all: unset;
+  box-sizing: border-box;
   position: fixed;
   bottom: 96px;
   right: 24px;
@@ -52,37 +94,48 @@
   overflow: hidden;
   display: none;
   background: #fff;
+  margin: 0;
+  padding: 0;
 }
 
-.aiserver-panel-wrap.is-open {
+#aiserver-widget-panel-wrap.is-open {
   display: block;
 }
 
-.aiserver-panel {
+#aiserver-widget-iframe {
+  display: block;
   width: 100%;
   height: 100%;
+  margin: 0;
+  padding: 0;
   border: 0;
+  background: #fff;
 }
 
-.aiserver-backdrop {
+#aiserver-widget-backdrop {
+  all: unset;
+  box-sizing: border-box;
   position: fixed;
   inset: 0;
   background: rgba(0, 0, 0, 0.25);
   z-index: 2147482998;
   display: none;
+  margin: 0;
+  padding: 0;
+  border: none;
 }
 
-.aiserver-backdrop.is-open {
+#aiserver-widget-backdrop.is-open {
   display: block;
 }
 
 @media (max-width: 480px) {
-  .aiserver-launcher {
+  #aiserver-widget-launcher {
     bottom: 16px;
     right: 16px;
   }
 
-  .aiserver-panel-wrap {
+  #aiserver-widget-panel-wrap {
     bottom: 80px;
     right: 16px;
     left: 16px;
