@@ -83,6 +83,7 @@ AIServer/
 | [.docs/WIDGET-SITES.md](.docs/WIDGET-SITES.md) | **Вставка виджета** на gortruck.ru, service-ref.ru, refmontaj.ru и др. |
 | [.docs/WIDGET-INTEGRATION.md](.docs/WIDGET-INTEGRATION.md) | Архитектура виджета, nginx, деплой |
 | [.docs/INTAKE-STORAGE.md](.docs/INTAKE-STORAGE.md) | Хранение диалогов, админ, webhook для n8n/MAX |
+| [.docs/AGENT-PROMPT-WIDGET-UI.md](.docs/AGENT-PROMPT-WIDGET-UI.md) | **Промпт для агента:** анимация и UI виджета (Phase 3) |
 | [.docs/GITHUB-PUBLISH.md](.docs/GITHUB-PUBLISH.md) | Публикация на GitHub (push, 403, безопасность) |
 
 **GitHub:** https://github.com/rubigruz-creator/AIServer

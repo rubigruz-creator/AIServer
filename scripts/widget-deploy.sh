@@ -41,6 +41,10 @@ echo "==> Публикация embed-статики в $EMBED_PUBLIC_DIR"
 mkdir -p "$EMBED_PUBLIC_DIR"
 cp -f embed/* "$EMBED_PUBLIC_DIR"/
 chmod 644 "$EMBED_PUBLIC_DIR"/*
+if ! grep -q aiserver-widget-launcher "$EMBED_PUBLIC_DIR/widget.css" 2>/dev/null; then
+  echo "Предупреждение: widget.css без #aiserver-widget-launcher — возможно старая копия." >&2
+  echo "  Проверьте git pull или curl с SHA коммита (см. .docs/WIDGET-SITES.md)" >&2
+fi
 
 # --- 2. API key для nginx ---
 if [[ -n "${WIDGET_API_KEY:-}" ]]; then

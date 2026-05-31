@@ -8,7 +8,8 @@
 
 **Для ИИ-агентов (технический контекст):** [.docs/AGENT-CONTEXT.md](./AGENT-CONTEXT.md)  
 **Виджет на сайтах:** [.docs/WIDGET-SITES.md](./WIDGET-SITES.md) (код для вставки) · [.docs/WIDGET-INTEGRATION.md](./WIDGET-INTEGRATION.md)  
-**Диалоги и заявки:** [.docs/INTAKE-STORAGE.md](./INTAKE-STORAGE.md)
+**Диалоги и заявки:** [.docs/INTAKE-STORAGE.md](./INTAKE-STORAGE.md)  
+**Следующая задача (UI виджета):** [.docs/AGENT-PROMPT-WIDGET-UI.md](./AGENT-PROMPT-WIDGET-UI.md)
 
 ---
 
@@ -40,9 +41,11 @@
 | `WEBUI_URL` в docker-compose | ✅ (на сервере добавлено вручную) |
 | Embed-виджет (чат на сайтах) | ✅ см. [WIDGET-SITES.md](./WIDGET-SITES.md) |
 | Intake API (диалоги, `/intake/admin`) | ✅ |
-| Сайты с виджетом (CSP в nginx) | gortruck.ru, service-ref.ru, refmontaj.ru, ons/remont-gazon.ru |
+| Сайты с виджетом (CSP в nginx) | gortruck.ru, service-ref.ru, refmontaj.ru, ons, remont-gazon.ru |
+| service-ref.ru — виджет в prod | ✅ WordPress + изоляция CSS по ID |
+| `OLLAMA_KEEP_ALIVE`, прогрев модели | ✅ |
 | n8n / MAX / Telegram при заявке | ⬜ webhook готов (`INTAKE_WEBHOOK_URL`) |
-| Анимация и UI виджета | ⬜ следующий этап |
+| Анимация и UI виджета (Phase 3) | ⬜ см. [AGENT-PROMPT-WIDGET-UI.md](./AGENT-PROMPT-WIDGET-UI.md) |
 
 ### Продакшен-параметры
 
@@ -54,6 +57,8 @@
 | Путь проекта на сервере | `/root/AIServer` |
 | Open WebUI (локально) | `127.0.0.1:3000` |
 | Ollama (локально) | `127.0.0.1:11434` |
+| Intake API (локально) | `127.0.0.1:3101` |
+| Embed static | `/var/www/aiserver/embed/` |
 | Nginx конфиг (рабочий) | `/etc/nginx/conf.d/zz-agent-webui.conf` |
 | SSL сертификат | Let's Encrypt → `/etc/letsencrypt/live/agent.remont-gazon.ru/` |
 | SSL в Hestia | `/home/rubi/conf/web/agent.remont-gazon.ru/ssl/` |
@@ -63,31 +68,32 @@
 ## 3. Архитектура
 
 ```mermaid
-flowchart LR
-    Client[Клиент / браузер]
-    DNS[DNS agent.remont-gazon.ru]
-    Nginx[Nginx zz-agent-webui.conf]
+flowchart TB
+    Sites[Сайты: service-ref.ru, gortruck.ru, …]
+    Agent[agent.remont-gazon.ru / Nginx]
+    Embed["/embed/ static + ollama chat"]
+    Intake["/intake/ API + admin"]
     WebUI[Open WebUI :3000]
-    Ollama[Ollama :11434]
-    Model[truck-service]
+    Ollama[Ollama :11434 truck-service]
 
-    Client --> DNS --> Nginx
-    Nginx -->|HTTPS proxy| WebUI
+    Sites -->|widget.js + iframe| Embed
+    Embed --> Ollama
+    Embed --> Intake
+    Agent --> Embed
+    Agent --> Intake
+    Agent --> WebUI
     WebUI --> Ollama
-    Ollama --> Model
 ```
 
-**Поток запроса:**
+**Два потока:**
 
-1. Клиент открывает `https://agent.remont-gazon.ru`.
-2. Nginx (слушает `90.156.171.36:443`) проксирует на `http://127.0.0.1:3000`.
-3. Open WebUI отправляет промпт в Ollama.
-4. Модель `truck-service` использует системный промпт из `prompts/truck-service-system.txt`.
+1. **Админ** — `https://agent.remont-gazon.ru` → Open WebUI → Ollama.
+2. **Виджет на сайтах** — snippet → `/embed/chat.html` → `/embed/ollama/chat` → Ollama; логи → intake-api.
 
 **Безопасность:**
 
-- Ollama и Open WebUI **не** открыты наружу — только `127.0.0.1`.
-- Снаружи доступен только Nginx (80/443).
+- Ollama, Open WebUI, intake-api — только `127.0.0.1`.
+- iframe разрешён только с доменов из `frame-ancestors` (см. `nginx/frame-ancestors.snippet`).
 
 ---
 
@@ -96,28 +102,21 @@ flowchart LR
 ```
 AIServer/
 ├── .docs/
-│   ├── PROJECT.md
-│   ├── AGENT-CONTEXT.md
-│   └── WIDGET-INTEGRATION.md
-├── docker-compose.yml      # Ollama, Open WebUI, n8n (profile)
-├── .env.example            # шаблон секретов
-├── .env                    # секреты (НЕ коммитить!)
-├── prompts/
-│   └── truck-service-system.txt   # единственный источник системного промпта
-├── ollama/
-│   └── Modelfile.params      # temperature, template (собирается в model-create)
+│   ├── PROJECT.md, AGENT-CONTEXT.md
+│   ├── WIDGET-INTEGRATION.md, WIDGET-SITES.md
+│   ├── INTAKE-STORAGE.md, AGENT-PROMPT-WIDGET-UI.md
+│   └── GITHUB-PUBLISH.md
+├── services/intake-api/      # диалоги, заявки, /intake/admin
+├── embed/                    # widget + chat UI + snippet.html
+├── docker-compose.yml        # ollama, open-webui, intake-api
+├── prompts/truck-service-system.txt
 ├── nginx/
-│   ├── hestia-zz-agent-webui.conf.example  # рабочий шаблон для Hestia VPS
-│   └── n8n.conf              # опционально для n8n
+│   ├── hestia-zz-agent-webui.conf.example
+│   └── frame-ancestors.snippet
 └── scripts/
-    ├── common.sh             # общие функции
-    ├── stack.sh              # start | stop | status
-    ├── model-pull.sh
-    ├── model-create.sh
-    ├── model-update.sh
-    ├── model-stop.sh
-    ├── reset-webui.sh
-    └── fix-line-endings.sh   # CRLF → LF после копирования с Windows
+    ├── stack.sh, model-*.sh, model-warmup.sh
+    ├── widget-deploy.sh, widget-setup.sh
+    └── fix-line-endings.sh
 ```
 
 ### Что убрали при рефакторинге

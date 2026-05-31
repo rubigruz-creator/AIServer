@@ -16,7 +16,8 @@
 
 Виджет (`embed/chat.js`) при каждом сообщении вызывает API — история не теряется при закрытии вкладки.
 
-**Несколько сайтов:** один intake на все домены; в `conversations.source_url` сохраняется сайт-источник (referrer). Список сайтов с виджетом: [WIDGET-SITES.md](./WIDGET-SITES.md).
+**Несколько сайтов:** один intake на все домены; в `conversations.source_url` — сайт-источник (referrer).  
+Сайты: service-ref.ru (работает), gortruck.ru, refmontaj.ru, ons.remont-gazon.ru — [WIDGET-SITES.md](./WIDGET-SITES.md).
 
 ---
 

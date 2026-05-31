@@ -11,7 +11,7 @@
 1. **Do not break production invariants** listed in §8.
 2. **Single source of truth for LLM behavior:** `prompts/truck-service-system.txt` → rebuild via `scripts/model-create.sh`.
 3. **HestiaCP is present** on the VPS; Nginx for this domain is **not** managed only by repo files — live config is `/etc/nginx/conf.d/zz-agent-webui.conf`.
-4. **Website widget:** implemented in `embed/`; multisite via CSP — see [WIDGET-SITES.md](./WIDGET-SITES.md), [WIDGET-INTEGRATION.md](./WIDGET-INTEGRATION.md). Intake: [INTAKE-STORAGE.md](./INTAKE-STORAGE.md).
+4. **Website widget:** production on multiple sites (CSP + `#aiserver-widget-*` IDs). Docs: [WIDGET-SITES.md](./WIDGET-SITES.md), [WIDGET-INTEGRATION.md](./WIDGET-INTEGRATION.md). **Phase 3 UI:** [AGENT-PROMPT-WIDGET-UI.md](./AGENT-PROMPT-WIDGET-UI.md). Intake: [INTAKE-STORAGE.md](./INTAKE-STORAGE.md).
 5. Secrets live in `.env` (gitignored); never commit credentials.
 
 ---
@@ -267,11 +267,13 @@ Uncomment `deploy.resources.reservations` in `ollama` service if NVIDIA availabl
 
 ## 12. Website Floating Chat Widget (IMPLEMENTED)
 
-**Status:** Production. Static assets in `embed/`; chat via `/embed/ollama/chat`; logs in `intake-api`.
+**Status:** Production. Embed static: `/var/www/aiserver/embed/`. Chat: `/embed/ollama/chat`. Logs: `intake-api` :3101.
 
-**Multisite:** same snippet on all parent domains; nginx `frame-ancestors` whitelist — [WIDGET-SITES.md](./WIDGET-SITES.md).
+**Multisite:** gortruck.ru, service-ref.ru (live), refmontaj.ru, ons/remont-gazon.ru — [WIDGET-SITES.md](./WIDGET-SITES.md).
 
-**Backend:** `https://agent.remont-gazon.ru` → Ollama `truck-service` + intake SQLite.
+**CSS:** `#aiserver-widget-root`, `#aiserver-widget-launcher`, … — WordPress-safe; snippet `?v=2`.
+
+**Next (Phase 3):** animation/visibility — start from [AGENT-PROMPT-WIDGET-UI.md](./AGENT-PROMPT-WIDGET-UI.md).
 
 ### 12.1 Constraints
 
@@ -382,8 +384,9 @@ AIServer/
 - [x] Launcher + iframe chat (`embed/`)
 - [x] `truck-service` + intake storage
 - [x] CSP for gortruck.ru, service-ref.ru, refmontaj.ru, remont-gazon.ru, ons
-- [ ] Snippet on each target site (owner paste)
-- [ ] VPS nginx reloaded after CSP update
+- [x] CSS ID isolation for WordPress
+- [x] service-ref.ru widget live
+- [ ] Snippet on gortruck.ru, refmontaj.ru, ons (owner)
 
 ---
 
@@ -440,9 +443,11 @@ AIServer/
 | Document | Use case |
 |----------|----------|
 | [PROJECT.md](./PROJECT.md) | Human operator, incident history, Russian explanations |
+| [WIDGET-SITES.md](./WIDGET-SITES.md) | Snippet, multisite, deploy embed |
+| [AGENT-PROMPT-WIDGET-UI.md](./AGENT-PROMPT-WIDGET-UI.md) | Phase 3 widget UI task prompt |
 | [../README.md](../README.md) | Quick start |
 | `nginx/hestia-zz-agent-webui.conf.example` | Production proxy template |
 
 ---
 
-*Last updated: multisite widget (gortruck, service-ref, refmontaj), intake-api, Ollama keep_alive.*
+*Last updated: multisite prod, service-ref live, widget CSS IDs, intake-api, keep_alive. Phase 3 prompt added.*
