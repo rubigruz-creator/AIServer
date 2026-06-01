@@ -26,9 +26,9 @@
 Перед `</body>` в шаблоне / `index.html` / footer CMS:
 
 ```html
-<link rel="stylesheet" href="https://agent.remont-gazon.ru/embed/widget.css?v=2">
+<link rel="stylesheet" href="https://agent.remont-gazon.ru/embed/widget.css?v=3">
 <script
-  src="https://agent.remont-gazon.ru/embed/widget.js?v=2"
+  src="https://agent.remont-gazon.ru/embed/widget.js?v=3"
   defer
   data-chat-url="https://agent.remont-gazon.ru/embed/chat.html"
 ></script>
@@ -36,7 +36,7 @@
 
 Готовый файл: [embed/snippet.html](../embed/snippet.html)
 
-После обновления стилей виджета (Phase 3) увеличьте версию в URL: `?v=3`.
+Текущая версия кэша: `?v=3` (Phase 3 — анимация, badge, подсказка).
 
 ### Опционально — заголовок кнопки
 
@@ -63,6 +63,9 @@ WordPress и другие темы часто ломают классы `.aiserv
 | `#aiserver-widget-panel-wrap` | обёртка панели чата |
 | `#aiserver-widget-iframe` | iframe → `chat.html` |
 | `#aiserver-widget-backdrop` | затемнение фона |
+| `#aiserver-widget-launcher-badge` | badge «1» (до первого открытия) |
+| `#aiserver-widget-hint` | подсказка при первом визите |
+| `#aiserver-widget-hint-close` | закрыть подсказку |
 
 ---
 
@@ -124,7 +127,7 @@ curl -fsSL -o /var/www/aiserver/embed/widget.css \
 | Симптом | Решение |
 |---------|---------|
 | Пустой iframe, CSP в консоли без вашего домена | Обновить `zz-agent-webui.conf`, `nginx -t && reload` |
-| Кнопка «расплющена» / не круглая | Старый `widget.css` — деплой с `#aiserver-widget-launcher`, `?v=2` |
+| Кнопка «расплющена» / не круглая | Старый `widget.css` — деплой на VPS, snippet `?v=3` |
 | Старый CSP в браузере, curl на сервере OK | Инкогнито, Clear cache, Network → Disable cache |
 | `Framing https://agent.remont-gazon.ru/` | Неверный snippet — нужен `data-chat-url=.../embed/chat.html` |
 

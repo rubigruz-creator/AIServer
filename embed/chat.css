@@ -25,9 +25,10 @@ body {
   align-items: center;
   justify-content: space-between;
   padding: 12px 16px;
-  background: #1a6b4a;
+  background: linear-gradient(135deg, #1f7a55 0%, #1a6b4a 50%, #145a3d 100%);
   color: #fff;
   flex-shrink: 0;
+  box-shadow: 0 2px 8px rgba(20, 90, 61, 0.2);
 }
 
 .chat-header h1 {

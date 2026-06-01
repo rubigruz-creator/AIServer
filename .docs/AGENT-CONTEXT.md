@@ -271,9 +271,7 @@ Uncomment `deploy.resources.reservations` in `ollama` service if NVIDIA availabl
 
 **Multisite:** gortruck.ru, service-ref.ru (live), refmontaj.ru, ons/remont-gazon.ru — [WIDGET-SITES.md](./WIDGET-SITES.md).
 
-**CSS:** `#aiserver-widget-root`, `#aiserver-widget-launcher`, … — WordPress-safe; snippet `?v=2`.
-
-**Next (Phase 3):** animation/visibility — start from [AGENT-PROMPT-WIDGET-UI.md](./AGENT-PROMPT-WIDGET-UI.md).
+**CSS:** `#aiserver-widget-root`, `#aiserver-widget-launcher`, … — WordPress-safe; snippet `?v=3` (Phase 3: анимация, badge, hint).
 
 ### 12.1 Constraints
 

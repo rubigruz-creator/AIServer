@@ -1,7 +1,6 @@
 # Website Widget Integration — Technical Spec
 
-> **Status:** PRODUCTION (Phase 2 + intake + multisite + CSS isolation)  
-> **Next:** Phase 3 UI/animation — [AGENT-PROMPT-WIDGET-UI.md](./AGENT-PROMPT-WIDGET-UI.md)  
+> **Status:** PRODUCTION (Phase 2 + Phase 3 UI + intake + multisite + CSS isolation)  
 > **Parent context:** [AGENT-CONTEXT.md](./AGENT-CONTEXT.md) §12  
 > **Sites:** [WIDGET-SITES.md](./WIDGET-SITES.md)
 
@@ -23,7 +22,7 @@ Floating chat assistant on truck-service websites:
 ```text
 service-ref.ru | gortruck.ru | refmontaj.ru | ons.remont-gazon.ru | …
   │
-  ├─ widget.css?v=2, widget.js?v=2  ← agent.remont-gazon.ru/embed/
+  ├─ widget.css?v=3, widget.js?v=3  ← agent.remont-gazon.ru/embed/
   └─ iframe #aiserver-widget-iframe → /embed/chat.html
                     │
                     ├─ POST /embed/ollama/chat → Ollama :11434
@@ -48,7 +47,7 @@ agent.remont-gazon.ru/
 embed/
   widget.js, widget.css   # launcher — ID-scoped CSS, WordPress-safe
   chat.html, chat.js, chat.css
-  snippet.html            # ?v=2 cache buster
+  snippet.html            # ?v=3 cache buster
 
 services/intake-api/
 
@@ -135,19 +134,28 @@ curl -sI https://agent.remont-gazon.ru/embed/chat.html | grep -i content-securit
 - [x] CSS isolation (`#aiserver-widget-*`)
 - [x] service-ref.ru — E2E виджет
 - [ ] snippet на gortruck.ru, refmontaj.ru, ons (владелец)
+- [x] Phase 3 UI (анимация, badge, hint, плавная панель)
 - [ ] E2E заявка на каждом сайте в intake admin
 
 ---
 
-## 10. Phase 3 — UI & animation (backlog)
+## 10. Phase 3 — UI & animation (done)
 
-См. **[AGENT-PROMPT-WIDGET-UI.md](./AGENT-PROMPT-WIDGET-UI.md)**.
+Реализовано в `embed/widget.css`, `embed/widget.js` (`?v=3`).
 
-- Анимация launcher, заметность
-- Плавное открытие панели
-- `prefers-reduced-motion`
-- Согласование `chat.css` с launcher
-- Bump `?v=` в snippet после релиза
+| Функция | Реализация |
+|---------|------------|
+| Заметность launcher | Градиент 60×60px, пульсирующее кольцо (`::before`), лёгкое покачивание |
+| Появление | Класс `is-revealed` после скролла >80px или через 1.2 с |
+| Badge «1» | `#aiserver-widget-launcher-badge`, скрывается после первого открытия (`localStorage`) |
+| Подсказка | `#aiserver-widget-hint` — «Нужна помощь?…», первый визит, закрытие × |
+| Панель / backdrop | `opacity` + `transform`, без `display:none` — плавное открытие |
+| Иконка | Чат ↔ крестик при открытии (`is-active`) |
+| Доступность | `prefers-reduced-motion: reduce` — без анимаций, кнопка сразу видна |
+| iframe UI | `chat.css` — градиент шапки в цвет бренда |
+
+**Деплой:** `cp embed/widget.css embed/widget.js /var/www/aiserver/embed/`  
+**Сайты:** обновить snippet на `?v=3` (см. [WIDGET-SITES.md](./WIDGET-SITES.md)).
 
 Другой backlog: rate limit, n8n/MAX webhook, per-site `AIServerWidget.title`.
 

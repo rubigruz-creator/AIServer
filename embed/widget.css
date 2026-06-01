@@ -1,12 +1,17 @@
 /**
  * Виджет AIServer — стили изолированы под #aiserver-widget-root.
  * Не используйте голые классы .aiserver-* вне этого блока.
+ * Phase 3: анимации, badge, подсказка, плавная панель.
  */
 
 #aiserver-widget-root {
   --aiserver-primary: #1a6b4a;
   --aiserver-primary-hover: #145a3d;
+  --aiserver-primary-ring: rgba(26, 107, 74, 0.45);
   --aiserver-shadow: 0 8px 32px rgba(0, 0, 0, 0.22);
+  --aiserver-shadow-lg: 0 12px 40px rgba(0, 0, 0, 0.28);
+  --aiserver-ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --aiserver-duration: 0.32s;
   position: static;
   z-index: auto;
   display: block;
@@ -29,23 +34,25 @@
   box-sizing: border-box;
 }
 
+/* —— Launcher —— */
+
 #aiserver-widget-launcher {
   all: unset;
   box-sizing: border-box;
   position: fixed;
   bottom: 24px;
   right: 24px;
-  width: 56px;
-  height: 56px;
-  min-width: 56px;
-  min-height: 56px;
-  max-width: 56px;
-  max-height: 56px;
+  width: 60px;
+  height: 60px;
+  min-width: 60px;
+  min-height: 60px;
+  max-width: 60px;
+  max-height: 60px;
   margin: 0;
   padding: 0;
   border: 0;
   border-radius: 50%;
-  background: var(--aiserver-primary);
+  background: linear-gradient(145deg, #1f7a55 0%, var(--aiserver-primary) 55%, #145a3d 100%);
   color: #fff;
   cursor: pointer;
   z-index: 2147483000;
@@ -53,23 +60,70 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: transform 0.2s ease, background 0.2s ease;
+  opacity: 0;
+  transform: translateY(16px) scale(0.92);
+  transition:
+    opacity var(--aiserver-duration) var(--aiserver-ease),
+    transform var(--aiserver-duration) var(--aiserver-ease),
+    background 0.2s ease,
+    box-shadow 0.2s ease;
   font: inherit;
   line-height: 1;
   text-transform: none;
   letter-spacing: normal;
   appearance: none;
   -webkit-appearance: none;
+  overflow: visible;
+}
+
+#aiserver-widget-launcher.is-revealed {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+}
+
+#aiserver-widget-launcher::before {
+  content: "";
+  position: absolute;
+  inset: -4px;
+  border-radius: 50%;
+  border: 2px solid var(--aiserver-primary-ring);
+  opacity: 0;
+  animation: aiserver-pulse-ring 2.8s ease-out infinite;
+  pointer-events: none;
+}
+
+#aiserver-widget-launcher:not(.is-active):not(:hover).is-revealed {
+  animation: aiserver-launcher-sway 5s ease-in-out infinite;
 }
 
 #aiserver-widget-launcher:hover {
-  background: var(--aiserver-primary-hover);
-  transform: scale(1.05);
+  background: linear-gradient(145deg, #228f62 0%, var(--aiserver-primary-hover) 100%);
+  box-shadow: var(--aiserver-shadow-lg);
+  transform: translateY(-2px) scale(1.06);
+}
+
+#aiserver-widget-launcher.is-revealed:hover {
+  animation: none;
+}
+
+#aiserver-widget-launcher.is-active {
+  background: #2d3d36;
+  animation: none;
+}
+
+#aiserver-widget-launcher.is-active:hover {
+  transform: none;
+  box-shadow: var(--aiserver-shadow);
+}
+
+#aiserver-widget-launcher.is-active::before {
+  animation: none;
+  opacity: 0;
 }
 
 #aiserver-widget-launcher:focus-visible {
   outline: 2px solid #fff;
-  outline-offset: 2px;
+  outline-offset: 3px;
 }
 
 #aiserver-widget-launcher svg {
@@ -78,7 +132,134 @@
   height: 28px;
   fill: currentColor;
   pointer-events: none;
+  position: relative;
+  z-index: 1;
 }
+
+/* Badge «1» */
+
+#aiserver-widget-launcher-badge {
+  all: unset;
+  box-sizing: border-box;
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 5px;
+  border-radius: 10px;
+  background: #c41e3a;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 20px;
+  text-align: center;
+  z-index: 2;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+  pointer-events: none;
+  display: block;
+  opacity: 1;
+  transform: scale(1);
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+#aiserver-widget-launcher-badge.is-hidden {
+  opacity: 0;
+  transform: scale(0.5);
+  pointer-events: none;
+}
+
+/* Подсказка при первом визите */
+
+#aiserver-widget-hint {
+  all: unset;
+  box-sizing: border-box;
+  position: fixed;
+  bottom: 96px;
+  right: 24px;
+  max-width: min(280px, calc(100vw - 48px));
+  padding: 12px 36px 12px 14px;
+  margin: 0;
+  border: none;
+  border-radius: 12px;
+  background: #fff;
+  color: #1a1a1a;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.4;
+  box-shadow: var(--aiserver-shadow-lg);
+  z-index: 2147482997;
+  display: block;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(8px);
+  transition:
+    opacity var(--aiserver-duration) var(--aiserver-ease),
+    transform var(--aiserver-duration) var(--aiserver-ease),
+    visibility 0s linear var(--aiserver-duration);
+  pointer-events: none;
+}
+
+#aiserver-widget-hint.is-visible {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+  transition:
+    opacity var(--aiserver-duration) var(--aiserver-ease),
+    transform var(--aiserver-duration) var(--aiserver-ease),
+    visibility 0s;
+  pointer-events: auto;
+}
+
+#aiserver-widget-hint.is-hidden {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+#aiserver-widget-hint::after {
+  content: "";
+  position: absolute;
+  bottom: -8px;
+  right: 28px;
+  width: 14px;
+  height: 14px;
+  background: #fff;
+  transform: rotate(45deg);
+  box-shadow: 4px 4px 8px rgba(0, 0, 0, 0.06);
+}
+
+#aiserver-widget-hint-text {
+  display: block;
+  margin: 0;
+  padding: 0;
+}
+
+#aiserver-widget-hint-close {
+  all: unset;
+  box-sizing: border-box;
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 24px;
+  height: 24px;
+  min-width: 24px;
+  min-height: 24px;
+  border-radius: 6px;
+  font-size: 18px;
+  line-height: 24px;
+  text-align: center;
+  color: #6b7c72;
+  cursor: pointer;
+  display: block;
+}
+
+#aiserver-widget-hint-close:hover {
+  background: #eef3f0;
+  color: #1a1a1a;
+}
+
+/* —— Панель чата —— */
 
 #aiserver-widget-panel-wrap {
   all: unset;
@@ -89,17 +270,33 @@
   width: min(420px, calc(100vw - 32px));
   height: min(620px, calc(100vh - 120px));
   z-index: 2147482999;
-  border-radius: 12px;
-  box-shadow: var(--aiserver-shadow);
+  border-radius: 14px;
+  box-shadow: var(--aiserver-shadow-lg);
   overflow: hidden;
-  display: none;
+  display: block;
   background: #fff;
   margin: 0;
   padding: 0;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(16px) scale(0.97);
+  transform-origin: bottom right;
+  pointer-events: none;
+  transition:
+    opacity var(--aiserver-duration) var(--aiserver-ease),
+    transform var(--aiserver-duration) var(--aiserver-ease),
+    visibility 0s linear var(--aiserver-duration);
 }
 
 #aiserver-widget-panel-wrap.is-open {
-  display: block;
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0) scale(1);
+  pointer-events: auto;
+  transition:
+    opacity var(--aiserver-duration) var(--aiserver-ease),
+    transform var(--aiserver-duration) var(--aiserver-ease),
+    visibility 0s;
 }
 
 #aiserver-widget-iframe {
@@ -112,27 +309,112 @@
   background: #fff;
 }
 
+/* —— Backdrop —— */
+
 #aiserver-widget-backdrop {
   all: unset;
   box-sizing: border-box;
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.25);
+  background: rgba(0, 0, 0, 0.28);
   z-index: 2147482998;
-  display: none;
+  display: block;
   margin: 0;
   padding: 0;
   border: none;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition:
+    opacity var(--aiserver-duration) ease,
+    visibility 0s linear var(--aiserver-duration);
 }
 
 #aiserver-widget-backdrop.is-open {
-  display: block;
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  transition:
+    opacity var(--aiserver-duration) ease,
+    visibility 0s;
 }
+
+/* —— Keyframes —— */
+
+@keyframes aiserver-pulse-ring {
+  0% {
+    transform: scale(1);
+    opacity: 0.55;
+  }
+  70% {
+    transform: scale(1.18);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1.18);
+    opacity: 0;
+  }
+}
+
+@keyframes aiserver-launcher-sway {
+  0%,
+  100% {
+    transform: translateY(0) rotate(0deg);
+  }
+  25% {
+    transform: translateY(-2px) rotate(-1.5deg);
+  }
+  75% {
+    transform: translateY(-1px) rotate(1.5deg);
+  }
+}
+
+/* —— Reduced motion —— */
+
+@media (prefers-reduced-motion: reduce) {
+  #aiserver-widget-launcher,
+  #aiserver-widget-launcher::before,
+  #aiserver-widget-panel-wrap,
+  #aiserver-widget-backdrop,
+  #aiserver-widget-hint,
+  #aiserver-widget-launcher-badge {
+    animation: none !important;
+    transition-duration: 0.01ms !important;
+  }
+
+  #aiserver-widget-launcher {
+    opacity: 1;
+    transform: none;
+  }
+
+  #aiserver-widget-launcher::before {
+    display: none;
+  }
+}
+
+/* —— Mobile —— */
 
 @media (max-width: 480px) {
   #aiserver-widget-launcher {
     bottom: 16px;
     right: 16px;
+    width: 56px;
+    height: 56px;
+    min-width: 56px;
+    min-height: 56px;
+    max-width: 56px;
+    max-height: 56px;
+  }
+
+  #aiserver-widget-hint {
+    bottom: 84px;
+    right: 16px;
+    left: 16px;
+    max-width: none;
+  }
+
+  #aiserver-widget-hint::after {
+    right: 24px;
   }
 
   #aiserver-widget-panel-wrap {
@@ -141,5 +423,6 @@
     left: 16px;
     width: auto;
     height: min(70vh, calc(100vh - 100px));
+    transform-origin: bottom center;
   }
 }
