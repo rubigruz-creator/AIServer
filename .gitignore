@@ -1,4 +1,8 @@
 .env
+__pycache__/
+*.pyc
 *.pem
 *.key
 certbot/
+prompts/knowledge/sites-scraped.md
+prompts/knowledge/feedback-export.json

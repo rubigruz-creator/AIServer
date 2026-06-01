@@ -60,7 +60,8 @@ DNS A: agent.remont-gazon.ru → 90.156.171.36
 nginx (host, /etc/nginx/conf.d/zz-agent-webui.conf)
   listen VPS_IP:443 ssl
   /              → 127.0.0.1:3000 (Open WebUI admin)
-  /embed/        → static /var/www/aiserver/embed + /embed/ollama/chat → Ollama
+  /embed/        → static /var/www/aiserver/embed
+  /intake/api/chat → intake-api (RAG) → Ollama
   /intake/       → 127.0.0.1:3101 (intake-api)
   │
   ├─► open-webui (127.0.0.1:3000→8080)
@@ -267,7 +268,7 @@ Uncomment `deploy.resources.reservations` in `ollama` service if NVIDIA availabl
 
 ## 12. Website Floating Chat Widget (IMPLEMENTED)
 
-**Status:** Production. Embed static: `/var/www/aiserver/embed/`. Chat: `/embed/ollama/chat`. Logs: `intake-api` :3101.
+**Status:** Production. Embed static: `/var/www/aiserver/embed/`. Chat: `/intake/api/chat` (RAG). Logs: `intake-api` :3101.
 
 **Multisite:** gortruck.ru, service-ref.ru (live), refmontaj.ru, ons/remont-gazon.ru — [WIDGET-SITES.md](./WIDGET-SITES.md).
 
@@ -415,6 +416,9 @@ AIServer/
 | Hook | Location | Use |
 |------|----------|-----|
 | System prompt | `prompts/truck-service-system.txt` | Dialog policy |
+| Knowledge files | `prompts/knowledge/*.md` | SYSTEM via `model-create.sh` + RAG index |
+| RAG chat | `POST /intake/api/chat` | Widget LLM + retrieved chunks |
+| RAG reindex | `POST /intake/api/rag/reindex` | Admin; `scripts/knowledge-index.sh` |
 | Model params | `ollama/Modelfile.params` | temperature, context window |
 | Default model | `.env` `OLLAMA_DEFAULT_MODEL` | WebUI default selection |
 | Public URL | `WEBUI_URL`, `DOMAIN` | Links, redirects, embed |

@@ -1,7 +1,8 @@
 (function () {
   'use strict';
 
-  var API_URL = '/embed/ollama/chat';
+  // RAG + Ollama через intake-api (см. .docs/KNOWLEDGE-PIPELINE.md)
+  var API_URL = '/intake/api/chat';
   var INTAKE_API = '/intake/api';
   var SESSION_KEY = 'aiserver_session_id';
   var MODEL = 'truck-service:latest';

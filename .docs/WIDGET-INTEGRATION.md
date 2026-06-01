@@ -25,7 +25,7 @@ service-ref.ru | gortruck.ru | refmontaj.ru | ons.remont-gazon.ru | …
   ├─ widget.css?v=3, widget.js?v=3  ← agent.remont-gazon.ru/embed/
   └─ iframe #aiserver-widget-iframe → /embed/chat.html
                     │
-                    ├─ POST /embed/ollama/chat → Ollama :11434
+                    ├─ POST /intake/api/chat → intake-api (RAG) → Ollama :11434
                     ├─ POST /intake/api/*      → intake-api :3101
                     └─ CSP frame-ancestors   → whitelist only
 
@@ -35,7 +35,7 @@ agent.remont-gazon.ru/
   └─ /intake/       → intake-api
 ```
 
-**Chat:** `/embed/ollama/chat` (не Open WebUI API — обход бага v0.9.5).
+**Chat:** `/intake/api/chat` (RAG + прокси Ollama). Резерв: `/embed/ollama/chat` (прямой Ollama без RAG).
 
 **Static:** nginx `alias /var/www/aiserver/embed/`; `Access-Control-Allow-Origin: *` для CSS/JS.
 

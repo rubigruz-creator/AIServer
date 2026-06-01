@@ -29,7 +29,7 @@
 
 **Не менять** (если не согласовано явно):
 - логику сбора заявки в `embed/chat.js` и промпт модели;
-- URL API (`/embed/ollama/chat`, `/intake/api`);
+- URL API (`/intake/api/chat`, `/intake/api`);
 - nginx CSP и список frame-ancestors;
 - авторизацию intake admin.
 

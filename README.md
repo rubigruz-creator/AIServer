@@ -42,6 +42,7 @@ AIServer/
 ├── docker-compose.yml
 ├── .env.example
 ├── prompts/truck-service-system.txt
+├── prompts/knowledge/          ← база знаний (SYSTEM + RAG)
 ├── ollama/Modelfile.params
 ├── nginx/hestia-zz-agent-webui.conf.example
 └── scripts/
@@ -60,6 +61,9 @@ AIServer/
 | `./scripts/reset-webui.sh` | Сброс Open WebUI |
 | `./scripts/widget-setup.sh` | Справка по настройке виджета |
 | `./scripts/widget-deploy.sh` | Деплой виджета + intake-api на VPS |
+| `./scripts/knowledge-index.sh` | Индекс RAG из `prompts/knowledge/` |
+| `./scripts/knowledge-scrape.sh` | Черновик текста с сайтов (whitelist) |
+| `./scripts/knowledge-feedback-export.sh` | Экспорт диалогов для улучшения FAQ |
 
 ---
 
@@ -83,6 +87,8 @@ AIServer/
 | [.docs/WIDGET-SITES.md](.docs/WIDGET-SITES.md) | **Вставка виджета** на gortruck.ru, service-ref.ru, refmontaj.ru и др. |
 | [.docs/WIDGET-INTEGRATION.md](.docs/WIDGET-INTEGRATION.md) | Архитектура виджета, nginx, деплой |
 | [.docs/INTAKE-STORAGE.md](.docs/INTAKE-STORAGE.md) | Хранение диалогов, админ, webhook для n8n/MAX |
+| [.docs/KNOWLEDGE-PIPELINE.md](.docs/KNOWLEDGE-PIPELINE.md) | Скрейп, RAG, индексация знаний |
+| [.docs/KNOWLEDGE-FEEDBACK.md](.docs/KNOWLEDGE-FEEDBACK.md) | Цикл улучшения FAQ из диалогов |
 | [.docs/AGENT-PROMPT-WIDGET-UI.md](.docs/AGENT-PROMPT-WIDGET-UI.md) | **Промпт для агента:** анимация и UI виджета (Phase 3) |
 | [.docs/GITHUB-PUBLISH.md](.docs/GITHUB-PUBLISH.md) | Публикация на GitHub (push, 403, безопасность) |
 

@@ -61,6 +61,8 @@ services:
     build: ./services/intake-api
     container_name: intake-api
     restart: unless-stopped
+    depends_on:
+      - ollama
     env_file:
       - .env
     environment:
@@ -68,9 +70,16 @@ services:
       - INTAKE_ADMIN_USER=${INTAKE_ADMIN_USER:-admin}
       - INTAKE_ADMIN_PASSWORD=${INTAKE_ADMIN_PASSWORD:-}
       - INTAKE_WEBHOOK_URL=${INTAKE_WEBHOOK_URL:-}
+      - OLLAMA_BASE_URL=http://ollama:11434
+      - CHAT_MODEL=${OLLAMA_DEFAULT_MODEL:-truck-service}:latest
+      - RAG_ENABLED=${RAG_ENABLED:-true}
+      - RAG_TOP_K=${RAG_TOP_K:-3}
+      - RAG_EMBED_MODEL=${RAG_EMBED_MODEL:-nomic-embed-text}
+      - KNOWLEDGE_DIR=/knowledge
       - TZ=${TZ:-Europe/Moscow}
     volumes:
       - intake_data:/data
+      - ./prompts/knowledge:/knowledge:ro
     ports:
       - "127.0.0.1:3101:3100"
 

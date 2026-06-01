@@ -47,6 +47,9 @@ def init_db() -> None:
                 ON conversations(created_at DESC);
             """
         )
+        from app.rag.store import init_rag_tables
+
+        init_rag_tables(conn)
 
 
 @contextmanager

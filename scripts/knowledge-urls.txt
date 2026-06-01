@@ -1,0 +1,7 @@
+# Whitelist URL для скрейпера (один URL на строку; # — комментарий)
+# После генерации проверьте prompts/knowledge/sites-scraped.md вручную.
+
+https://remont-gazon.ru/
+https://gortruck.ru/
+https://service-ref.ru/
+https://refmontaj.ru/

@@ -88,7 +88,7 @@ flowchart TB
 **Два потока:**
 
 1. **Админ** — `https://agent.remont-gazon.ru` → Open WebUI → Ollama.
-2. **Виджет на сайтах** — snippet → `/embed/chat.html` → `/embed/ollama/chat` → Ollama; логи → intake-api.
+2. **Виджет на сайтах** — snippet → `/embed/chat.html` → `/intake/api/chat` (RAG) → Ollama; логи → intake-api.
 
 **Безопасность:**
 
@@ -110,6 +110,7 @@ AIServer/
 ├── embed/                    # widget + chat UI + snippet.html
 ├── docker-compose.yml        # ollama, open-webui, intake-api
 ├── prompts/truck-service-system.txt
+├── prompts/knowledge/            # FAQ, услуги, RAG
 ├── nginx/
 │   ├── hestia-zz-agent-webui.conf.example
 │   └── frame-ancestors.snippet
@@ -191,13 +192,18 @@ cd ~/AIServer
 2. добавляет параметры из `ollama/Modelfile.params`;
 3. создаёт модель `truck-service` в Ollama.
 
-### Редактирование промпта
+### Редактирование промпта и базы знаний
 
-Менять **только** `prompts/truck-service-system.txt`, затем:
+- Сценарий заявки: `prompts/truck-service-system.txt`
+- Факты и FAQ: `prompts/knowledge/*.md` (подключаются в SYSTEM и в RAG)
 
 ```bash
 ./scripts/model-create.sh qwen2.5:1.5b
+docker exec ollama ollama pull nomic-embed-text   # первый раз, для RAG
+./scripts/knowledge-index.sh                        # после правок knowledge/
 ```
+
+Подробнее: [.docs/KNOWLEDGE-PIPELINE.md](./KNOWLEDGE-PIPELINE.md), [.docs/KNOWLEDGE-FEEDBACK.md](./KNOWLEDGE-FEEDBACK.md).
 
 ---
 

@@ -30,8 +30,10 @@ SORT_FIELDS = {
     "source_url": "c.source_url",
 }
 from app.notifications import notify_application_created
+from app.chat_proxy import proxy_chat
+from app.rag.ingest import reindex_knowledge_dir
 
-app = FastAPI(title="AIServer Intake API", version="1.0.0")
+app = FastAPI(title="AIServer Intake API", version="1.1.0")
 security = HTTPBasic()
 STATIC_DIR = Path(__file__).parent / "static"
 
@@ -76,6 +78,24 @@ def on_startup() -> None:
 @app.get("/health")
 def health() -> dict[str, str]:
     return {"status": "ok"}
+
+
+@app.post("/api/chat")
+async def chat_with_rag(request: Request) -> Any:
+    """Прокси Ollama /api/chat с RAG-контекстом (виджет)."""
+    return await proxy_chat(request)
+
+
+@app.post("/api/rag/reindex")
+async def rag_reindex(_user: Annotated[str, Depends(require_admin)]) -> dict[str, Any]:
+    """Переиндексация prompts/knowledge → векторное хранилище."""
+    try:
+        stats = await reindex_knowledge_dir()
+    except FileNotFoundError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except Exception as exc:
+        raise HTTPException(status_code=502, detail=f"reindex failed: {exc}") from exc
+    return {"ok": True, **stats}
 
 
 @app.post("/api/session")
@@ -238,6 +258,61 @@ def purge_short_conversations(
     with get_conn() as conn:
         deleted = purge_conversations_below_message_count(conn, min_messages)
     return {"ok": True, "deleted_count": deleted, "min_messages": min_messages}
+
+
+@app.get("/api/admin/feedback-report")
+def feedback_report(
+    _user: Annotated[str, Depends(require_admin)],
+    limit: int = 200,
+    min_user_messages: int = 2,
+) -> dict[str, Any]:
+    """
+    Черновик для ежемесячного разбора: диалоги без заявки с несколькими вопросами клиента.
+    Добавляйте вывод в prompts/knowledge/faq.md после ревью.
+    """
+    limit = min(max(limit, 1), 500)
+    min_user_messages = max(min_user_messages, 1)
+    with get_conn() as conn:
+        rows = conn.execute(
+            """
+            SELECT c.id, c.source_url, c.updated_at, c.has_application,
+                   (SELECT COUNT(*) FROM messages m
+                    WHERE m.conversation_id = c.id AND m.role = 'user') AS user_msgs
+            FROM conversations c
+            WHERE c.has_application = 0
+            ORDER BY c.updated_at DESC
+            LIMIT ?
+            """,
+            (limit * 3,),
+        ).fetchall()
+        items: list[dict[str, Any]] = []
+        for row in rows:
+            if row["user_msgs"] < min_user_messages:
+                continue
+            msgs = conn.execute(
+                """
+                SELECT role, content, created_at FROM messages
+                WHERE conversation_id = ? AND role IN ('user', 'assistant')
+                ORDER BY created_at ASC, id ASC
+                """,
+                (row["id"],),
+            ).fetchall()
+            items.append(
+                {
+                    "conversation_id": row["id"],
+                    "source_url": row["source_url"],
+                    "updated_at": row["updated_at"],
+                    "user_messages": row["user_msgs"],
+                    "messages": [row_to_dict(m) for m in msgs],
+                }
+            )
+            if len(items) >= limit:
+                break
+    return {
+        "total": len(items),
+        "hint": "Перенесите частые вопросы в prompts/knowledge/faq.md, затем knowledge-index + model-create",
+        "items": items,
+    }
 
 
 @app.get("/api/admin/conversations/{conversation_id}")
