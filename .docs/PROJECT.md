@@ -203,7 +203,7 @@ docker exec ollama ollama pull nomic-embed-text   # первый раз, для 
 ./scripts/knowledge-index.sh                        # после правок knowledge/
 ```
 
-Подробнее: [.docs/KNOWLEDGE-PIPELINE.md](./KNOWLEDGE-PIPELINE.md), [.docs/KNOWLEDGE-FEEDBACK.md](./KNOWLEDGE-FEEDBACK.md).
+Подробнее: [.docs/KNOWLEDGE-RUNBOOK.md](./KNOWLEDGE-RUNBOOK.md) (пошагово для администратора), [.docs/KNOWLEDGE-PIPELINE.md](./KNOWLEDGE-PIPELINE.md), [.docs/KNOWLEDGE-FEEDBACK.md](./KNOWLEDGE-FEEDBACK.md).
 
 ---
 

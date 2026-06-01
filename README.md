@@ -87,6 +87,7 @@ AIServer/
 | [.docs/WIDGET-SITES.md](.docs/WIDGET-SITES.md) | **Вставка виджета** на gortruck.ru, service-ref.ru, refmontaj.ru и др. |
 | [.docs/WIDGET-INTEGRATION.md](.docs/WIDGET-INTEGRATION.md) | Архитектура виджета, nginx, деплой |
 | [.docs/INTAKE-STORAGE.md](.docs/INTAKE-STORAGE.md) | Хранение диалогов, админ, webhook для n8n/MAX |
+| [.docs/KNOWLEDGE-RUNBOOK.md](.docs/KNOWLEDGE-RUNBOOK.md) | **Регламент:** как и когда обучать бота (для администратора) |
 | [.docs/KNOWLEDGE-PIPELINE.md](.docs/KNOWLEDGE-PIPELINE.md) | Скрейп, RAG, индексация знаний |
 | [.docs/KNOWLEDGE-FEEDBACK.md](.docs/KNOWLEDGE-FEEDBACK.md) | Цикл улучшения FAQ из диалогов |
 | [.docs/AGENT-PROMPT-WIDGET-UI.md](.docs/AGENT-PROMPT-WIDGET-UI.md) | **Промпт для агента:** анимация и UI виджета (Phase 3) |

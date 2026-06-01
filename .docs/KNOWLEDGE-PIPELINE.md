@@ -63,4 +63,6 @@ docker exec ollama ollama pull nomic-embed-text
 
 Embedding-модель грузится по запросу; при OOM — `./scripts/model-stop.sh` между индексацией и чатом.
 
+**Для администратора (простая пошаговая инструкция):** [KNOWLEDGE-RUNBOOK.md](./KNOWLEDGE-RUNBOOK.md)
+
 См. также [KNOWLEDGE-FEEDBACK.md](./KNOWLEDGE-FEEDBACK.md) — цикл по диалогам intake.

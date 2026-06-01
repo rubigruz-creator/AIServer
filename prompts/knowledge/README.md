@@ -1,5 +1,7 @@
 # База знаний для модели truck-service
 
+**Инструкция для администратора:** [.docs/KNOWLEDGE-RUNBOOK.md](../../.docs/KNOWLEDGE-RUNBOOK.md)
+
 Файлы `*.md` в этой папке автоматически подключаются к SYSTEM при `./scripts/model-create.sh`
 и индексируются в RAG через `./scripts/knowledge-index.sh`.
 
