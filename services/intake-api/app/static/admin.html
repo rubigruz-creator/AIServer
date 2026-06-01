@@ -124,7 +124,9 @@
     .btn-danger:hover { background: #fad4d2; }
     .btn-sm { padding: 4px 10px; font-size: 12px; }
     .actions { white-space: nowrap; }
-    .source-cell { max-width: 160px; overflow: hidden; text-overflow: ellipsis; }
+    .source-cell { max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .source-cell a { color: var(--primary); text-decoration: none; }
+    .source-cell a:hover { text-decoration: underline; }
   </style>
 </head>
 <body>
@@ -168,13 +170,13 @@
       <thead>
         <tr id="headerRow">
           <th class="sortable" data-sort="created_at">Создан<span class="sort-arrow"></span></th>
+          <th class="sortable" data-sort="source_url">Источник (сайт)<span class="sort-arrow"></span></th>
           <th class="sortable" data-sort="updated_at">Обновлён<span class="sort-arrow"></span></th>
           <th class="sortable" data-sort="has_application">Заявка<span class="sort-arrow"></span></th>
           <th class="sortable" data-sort="client_phone">Телефон<span class="sort-arrow"></span></th>
           <th class="sortable" data-sort="vehicle">Авто<span class="sort-arrow"></span></th>
           <th class="sortable" data-sort="service_type">Услуга<span class="sort-arrow"></span></th>
           <th class="sortable" data-sort="message_count">Сообщ.<span class="sort-arrow"></span></th>
-          <th class="sortable" data-sort="source_url">Источник<span class="sort-arrow"></span></th>
           <th>Действия</th>
         </tr>
       </thead>
@@ -218,6 +220,43 @@
         .replace(/</g, '&lt;')
         .replace(/>/g, '&gt;')
         .replace(/"/g, '&quot;');
+    }
+
+    /** Краткое имя сайта для колонки «Источник» */
+    function formatSource(url) {
+      if (!url || url === '—') {
+        return { label: '—', full: '', href: '' };
+      }
+      var full = String(url).trim();
+      try {
+        var u = new URL(full);
+        var host = u.hostname.replace(/^www\./i, '');
+        return { label: host || full, full: full, href: full };
+      } catch (e) {
+        return {
+          label: full.length > 36 ? full.slice(0, 33) + '…' : full,
+          full: full,
+          href: '',
+        };
+      }
+    }
+
+    function sourceCellHtml(url) {
+      var s = formatSource(url);
+      if (s.label === '—') {
+        return '<td class="source-cell">—</td>';
+      }
+      if (s.href) {
+        return (
+          '<td class="source-cell" title="' + escapeHtml(s.full) + '">' +
+          '<a href="' + escapeHtml(s.href) + '" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()">' +
+          escapeHtml(s.label) + '</a></td>'
+        );
+      }
+      return (
+        '<td class="source-cell" title="' + escapeHtml(s.full) + '">' +
+        escapeHtml(s.label) + '</td>'
+      );
     }
 
     function updateSortHeaders() {
@@ -283,9 +322,9 @@
       data.items.forEach(function (item) {
         const tr = document.createElement('tr');
         tr.className = 'data-row' + (item.id === selectedId ? ' selected' : '');
-        const source = item.source_url || '—';
         tr.innerHTML =
           '<td>' + fmt(item.created_at) + '</td>' +
+          sourceCellHtml(item.source_url) +
           '<td>' + fmt(item.updated_at) + '</td>' +
           '<td><span class="badge ' + (item.has_application ? 'badge-yes' : 'badge-no') + '">' +
           (item.has_application ? 'да' : 'нет') + '</span></td>' +
@@ -293,7 +332,6 @@
           '<td>' + escapeHtml(item.vehicle || '—') + '</td>' +
           '<td>' + escapeHtml(item.service_type || '—') + '</td>' +
           '<td>' + (item.message_count || 0) + '</td>' +
-          '<td class="source-cell" title="' + escapeHtml(source) + '">' + escapeHtml(source) + '</td>' +
           '<td class="actions"><button type="button" class="btn btn-danger btn-sm btn-delete" data-id="' +
           escapeHtml(item.id) + '">Удалить</button></td>';
         tr.addEventListener('click', function (e) {
@@ -329,7 +367,12 @@
       detailMeta.innerHTML =
         '<div><strong>ID:</strong> <code>' + escapeHtml(c.id) + '</code></div>' +
         '<div>Создан: ' + fmt(c.created_at) + ' · Обновлён: ' + fmt(c.updated_at) + '</div>' +
-        (c.source_url ? '<div>Источник: ' + escapeHtml(c.source_url) + '</div>' : '') +
+        (c.source_url
+          ? '<div>Источник: <a href="' + escapeHtml(formatSource(c.source_url).href || c.source_url) +
+            '" target="_blank" rel="noopener noreferrer">' +
+            escapeHtml(formatSource(c.source_url).label) + '</a> (' +
+            escapeHtml(c.source_url) + ')</div>'
+          : '<div>Источник: —</div>') +
         (c.application_line ? '<div><strong>Заявка:</strong> ' + escapeHtml(c.application_line) + '</div>' : '');
       detailMessages.innerHTML = '';
       data.messages.forEach(function (m) {

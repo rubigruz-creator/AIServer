@@ -41,6 +41,18 @@
     });
   }
 
+  function getSourceUrl() {
+    try {
+      var parent = new URLSearchParams(window.location.search).get('parent');
+      if (parent) {
+        return parent;
+      }
+    } catch (e) {
+      /* ignore */
+    }
+    return document.referrer || '';
+  }
+
   async function ensureSession() {
     try {
       await fetch(INTAKE_API + '/session', {
@@ -48,7 +60,7 @@
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           session_id: getSessionId(),
-          source_url: document.referrer || '',
+          source_url: getSourceUrl(),
           user_agent: navigator.userAgent || '',
         }),
       });

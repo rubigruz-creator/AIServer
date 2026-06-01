@@ -46,10 +46,22 @@
   panelWrap.setAttribute('aria-label', config.title);
   panelWrap.setAttribute('aria-hidden', 'true');
 
+  function buildChatIframeUrl(baseUrl) {
+    var parentPage = window.location.href;
+    try {
+      var url = new URL(baseUrl, window.location.href);
+      url.searchParams.set('parent', parentPage);
+      return url.toString();
+    } catch (e) {
+      var sep = baseUrl.indexOf('?') >= 0 ? '&' : '?';
+      return baseUrl + sep + 'parent=' + encodeURIComponent(parentPage);
+    }
+  }
+
   var iframe = document.createElement('iframe');
   iframe.id = 'aiserver-widget-iframe';
   iframe.className = 'aiserver-panel';
-  iframe.src = config.chatUrl;
+  iframe.src = buildChatIframeUrl(config.chatUrl);
   iframe.title = config.title;
   iframe.loading = 'lazy';
   iframe.setAttribute('allow', 'microphone');
