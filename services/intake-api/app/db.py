@@ -64,3 +64,38 @@ def row_to_dict(row: sqlite3.Row | None) -> dict[str, Any] | None:
     if row is None:
         return None
     return dict(row)
+
+
+def delete_conversation(conn: sqlite3.Connection, conversation_id: str) -> bool:
+    cur = conn.execute("SELECT id FROM conversations WHERE id = ?", (conversation_id,))
+    if not cur.fetchone():
+        return False
+    conn.execute("DELETE FROM messages WHERE conversation_id = ?", (conversation_id,))
+    conn.execute("DELETE FROM conversations WHERE id = ?", (conversation_id,))
+    return True
+
+
+def purge_conversations_below_message_count(
+    conn: sqlite3.Connection, min_messages: int
+) -> int:
+    """Удаляет диалоги, у которых строго меньше min_messages сообщений."""
+    if min_messages < 1:
+        return 0
+    rows = conn.execute(
+        """
+        SELECT c.id
+        FROM conversations c
+        LEFT JOIN (
+            SELECT conversation_id, COUNT(*) AS cnt
+            FROM messages
+            GROUP BY conversation_id
+        ) m ON m.conversation_id = c.id
+        WHERE COALESCE(m.cnt, 0) < ?
+        """,
+        (min_messages,),
+    ).fetchall()
+    deleted = 0
+    for row in rows:
+        if delete_conversation(conn, row["id"]):
+            deleted += 1
+    return deleted

@@ -9,8 +9,26 @@ from fastapi.security import HTTPBasic, HTTPBasicCredentials
 from pydantic import BaseModel, Field
 
 from app import applications as app_parser
-from app.config import ADMIN_PASSWORD, ADMIN_USER
-from app.db import get_conn, init_db, row_to_dict, utc_now_iso
+from app.config import ADMIN_PASSWORD, ADMIN_USER, AUTO_PURGE_MIN_MESSAGES
+from app.db import (
+    delete_conversation,
+    get_conn,
+    init_db,
+    purge_conversations_below_message_count,
+    row_to_dict,
+    utc_now_iso,
+)
+
+SORT_FIELDS = {
+    "created_at": "c.created_at",
+    "updated_at": "c.updated_at",
+    "message_count": "message_count",
+    "has_application": "c.has_application",
+    "client_phone": "c.client_phone",
+    "vehicle": "c.vehicle",
+    "service_type": "c.service_type",
+    "source_url": "c.source_url",
+}
 from app.notifications import notify_application_created
 
 app = FastAPI(title="AIServer Intake API", version="1.0.0")
@@ -50,6 +68,9 @@ def require_admin(credentials: Annotated[HTTPBasicCredentials, Depends(security)
 @app.on_event("startup")
 def on_startup() -> None:
     init_db()
+    if AUTO_PURGE_MIN_MESSAGES > 0:
+        with get_conn() as conn:
+            purge_conversations_below_message_count(conn, AUTO_PURGE_MIN_MESSAGES)
 
 
 @app.get("/health")
@@ -166,10 +187,14 @@ def list_conversations(
     limit: int = 100,
     offset: int = 0,
     applications_only: bool = False,
+    sort_by: str = "created_at",
+    sort_order: str = "desc",
 ) -> dict[str, Any]:
     limit = min(max(limit, 1), 500)
     offset = max(offset, 0)
-    where = "WHERE has_application = 1" if applications_only else ""
+    order_col = SORT_FIELDS.get(sort_by, SORT_FIELDS["created_at"])
+    order_dir = "ASC" if sort_order.lower() == "asc" else "DESC"
+    where = "WHERE c.has_application = 1" if applications_only else ""
     with get_conn() as conn:
         rows = conn.execute(
             f"""
@@ -177,7 +202,7 @@ def list_conversations(
                    (SELECT COUNT(*) FROM messages m WHERE m.conversation_id = c.id) AS message_count
             FROM conversations c
             {where}
-            ORDER BY c.created_at DESC
+            ORDER BY {order_col} {order_dir}, c.id DESC
             LIMIT ? OFFSET ?
             """,
             (limit, offset),
@@ -188,7 +213,31 @@ def list_conversations(
     return {
         "total": total,
         "items": [row_to_dict(r) for r in rows],
+        "sort_by": sort_by if sort_by in SORT_FIELDS else "created_at",
+        "sort_order": order_dir.lower(),
     }
+
+
+@app.delete("/api/admin/conversations/{conversation_id}")
+def delete_conversation_admin(
+    conversation_id: str,
+    _user: Annotated[str, Depends(require_admin)],
+) -> dict[str, Any]:
+    with get_conn() as conn:
+        if not delete_conversation(conn, conversation_id):
+            raise HTTPException(status_code=404, detail="not found")
+    return {"ok": True, "deleted_id": conversation_id}
+
+
+@app.post("/api/admin/purge-short")
+def purge_short_conversations(
+    _user: Annotated[str, Depends(require_admin)],
+    min_messages: int = 3,
+) -> dict[str, Any]:
+    min_messages = max(min_messages, 1)
+    with get_conn() as conn:
+        deleted = purge_conversations_below_message_count(conn, min_messages)
+    return {"ok": True, "deleted_count": deleted, "min_messages": min_messages}
 
 
 @app.get("/api/admin/conversations/{conversation_id}")

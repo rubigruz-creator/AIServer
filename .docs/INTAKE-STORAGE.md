@@ -91,6 +91,17 @@ curl -s http://127.0.0.1:3101/health
 
 ---
 
+## Админка `/intake/admin`
+
+| Функция | Описание |
+|---------|----------|
+| Сортировка | По дате создания (по умолчанию), обновления, числу сообщений, заявке, телефону, авто, услуге, источнику; клик по заголовку колонки |
+| Удаление вручную | Кнопка «Удалить» в строке и в карточке диалога |
+| Удаление коротких | Кнопка «Удалить короткие (&lt;3)» — все диалоги с &lt; 3 сообщений |
+| Автоочистка при старте | `INTAKE_AUTO_PURGE_MIN_MESSAGES=3` (0 = отключить) |
+
+---
+
 ## API (для разработки)
 
 | Метод | Путь | Auth |
@@ -98,8 +109,10 @@ curl -s http://127.0.0.1:3101/health
 | POST | `/intake/api/session` | нет |
 | POST | `/intake/api/messages` | нет |
 | GET | `/intake/admin` | Basic |
-| GET | `/intake/api/admin/conversations` | Basic |
+| GET | `/intake/api/admin/conversations` | Basic (`sort_by`, `sort_order`, `applications_only`) |
 | GET | `/intake/api/admin/conversations/{id}` | Basic |
+| DELETE | `/intake/api/admin/conversations/{id}` | Basic |
+| POST | `/intake/api/admin/purge-short?min_messages=3` | Basic |
 
 ---
 

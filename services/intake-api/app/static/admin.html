@@ -10,6 +10,8 @@
       --card: #fff;
       --border: #dde5e0;
       --primary: #1a6b4a;
+      --danger: #b42318;
+      --danger-bg: #fdecea;
       --text: #1a1a1a;
       --muted: #5c6b63;
     }
@@ -35,8 +37,13 @@
       align-items: center;
       margin-bottom: 16px;
     }
-    label { font-size: 14px; color: var(--muted); }
-    input[type="checkbox"] { margin-right: 6px; }
+    .toolbar label { font-size: 14px; color: var(--muted); display: flex; align-items: center; gap: 6px; }
+    .toolbar select {
+      padding: 6px 10px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      font-size: 14px;
+    }
     table {
       width: 100%;
       border-collapse: collapse;
@@ -52,8 +59,17 @@
       vertical-align: top;
       font-size: 13px;
     }
-    th { background: #eef3f0; font-weight: 600; }
-    tr:hover { background: #f9fbfa; cursor: pointer; }
+    th {
+      background: #eef3f0;
+      font-weight: 600;
+      user-select: none;
+    }
+    th.sortable { cursor: pointer; }
+    th.sortable:hover { background: #e2ebe6; }
+    th.sortable.active { color: var(--primary); }
+    th .sort-arrow { font-size: 10px; margin-left: 4px; opacity: 0.7; }
+    tr.data-row:hover { background: #f9fbfa; cursor: pointer; }
+    tr.data-row.selected { background: #e8f5ee; }
     .badge {
       display: inline-block;
       padding: 2px 8px;
@@ -72,6 +88,15 @@
       display: none;
     }
     .detail.open { display: block; }
+    .detail-header {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+    }
+    .detail-header h2 { margin: 0; font-size: 18px; }
     .msg {
       margin: 8px 0;
       padding: 10px 12px;
@@ -85,22 +110,27 @@
     .msg.system { background: #f0f4f2; color: var(--muted); font-size: 13px; }
     .meta { font-size: 12px; color: var(--muted); margin-bottom: 12px; }
     .empty { padding: 24px; text-align: center; color: var(--muted); }
-    button {
-      background: var(--primary);
-      color: #fff;
+    .btn {
       border: 0;
       border-radius: 8px;
       padding: 8px 14px;
       cursor: pointer;
       font-size: 14px;
+      line-height: 1.2;
     }
-    button:hover { opacity: 0.92; }
+    .btn-primary { background: var(--primary); color: #fff; }
+    .btn-primary:hover { opacity: 0.92; }
+    .btn-danger { background: var(--danger-bg); color: var(--danger); border: 1px solid #f5c2c0; }
+    .btn-danger:hover { background: #fad4d2; }
+    .btn-sm { padding: 4px 10px; font-size: 12px; }
+    .actions { white-space: nowrap; }
+    .source-cell { max-width: 160px; overflow: hidden; text-overflow: ellipsis; }
   </style>
 </head>
 <body>
   <header>
     <h1>Диалоги и заявки виджета</h1>
-    <p>Полная история чатов с сайта · для оповещений подключите INTAKE_WEBHOOK_URL (n8n, MAX и др.)</p>
+    <p>Полная история чатов · автоудаление при старте: диалоги с &lt; 3 сообщений (INTAKE_AUTO_PURGE_MIN_MESSAGES)</p>
   </header>
   <main>
     <div class="toolbar">
@@ -108,27 +138,54 @@
         <input type="checkbox" id="applicationsOnly">
         Только с заявкой
       </label>
-      <button type="button" id="refreshBtn">Обновить</button>
+      <label>
+        Сортировка
+        <select id="sortBy">
+          <option value="created_at">Дата создания</option>
+          <option value="updated_at">Дата обновления</option>
+          <option value="message_count">Число сообщений</option>
+          <option value="has_application">Есть заявка</option>
+          <option value="client_phone">Телефон</option>
+          <option value="vehicle">Авто</option>
+          <option value="service_type">Услуга</option>
+          <option value="source_url">Источник (сайт)</option>
+        </select>
+      </label>
+      <label>
+        Порядок
+        <select id="sortOrder">
+          <option value="desc">По убыванию</option>
+          <option value="asc">По возрастанию</option>
+        </select>
+      </label>
+      <button type="button" class="btn btn-primary" id="refreshBtn">Обновить</button>
+      <button type="button" class="btn btn-danger" id="purgeShortBtn" title="Удалить все диалоги с менее чем 3 сообщениями">
+        Удалить короткие (&lt;3)
+      </button>
       <span id="stats" class="meta"></span>
     </div>
     <table>
       <thead>
-        <tr>
-          <th>Создан</th>
-          <th>Обновлён</th>
-          <th>Заявка</th>
-          <th>Телефон</th>
-          <th>Авто</th>
-          <th>Услуга</th>
-          <th>Сообщений</th>
-          <th>ID</th>
+        <tr id="headerRow">
+          <th class="sortable" data-sort="created_at">Создан<span class="sort-arrow"></span></th>
+          <th class="sortable" data-sort="updated_at">Обновлён<span class="sort-arrow"></span></th>
+          <th class="sortable" data-sort="has_application">Заявка<span class="sort-arrow"></span></th>
+          <th class="sortable" data-sort="client_phone">Телефон<span class="sort-arrow"></span></th>
+          <th class="sortable" data-sort="vehicle">Авто<span class="sort-arrow"></span></th>
+          <th class="sortable" data-sort="service_type">Услуга<span class="sort-arrow"></span></th>
+          <th class="sortable" data-sort="message_count">Сообщ.<span class="sort-arrow"></span></th>
+          <th class="sortable" data-sort="source_url">Источник<span class="sort-arrow"></span></th>
+          <th>Действия</th>
         </tr>
       </thead>
       <tbody id="rows"></tbody>
     </table>
     <div id="empty" class="empty" style="display:none">Пока нет диалогов</div>
     <section id="detail" class="detail">
-      <h2>Диалог</h2>
+      <div class="detail-header">
+        <h2>Диалог</h2>
+        <button type="button" class="btn btn-danger" id="deleteDetailBtn">Удалить диалог</button>
+      </div>
       <div id="detailMeta" class="meta"></div>
       <div id="detailMessages"></div>
     </section>
@@ -140,6 +197,10 @@
     const detailMessages = document.getElementById('detailMessages');
     const statsEl = document.getElementById('stats');
     const emptyEl = document.getElementById('empty');
+    const sortByEl = document.getElementById('sortBy');
+    const sortOrderEl = document.getElementById('sortOrder');
+
+    let selectedId = null;
 
     function fmt(iso) {
       if (!iso) return '—';
@@ -150,42 +211,112 @@
       }
     }
 
+    function escapeHtml(s) {
+      if (!s) return '';
+      return String(s)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
+
+    function updateSortHeaders() {
+      const by = sortByEl.value;
+      const order = sortOrderEl.value;
+      document.querySelectorAll('th.sortable').forEach(function (th) {
+        const field = th.getAttribute('data-sort');
+        th.classList.toggle('active', field === by);
+        const arrow = th.querySelector('.sort-arrow');
+        if (arrow) {
+          arrow.textContent = field === by ? (order === 'asc' ? '▲' : '▼') : '';
+        }
+      });
+    }
+
+    async function deleteConversation(id, confirmMsg) {
+      if (!confirm(confirmMsg || 'Удалить этот диалог безвозвратно?')) {
+        return false;
+      }
+      const res = await fetch(
+        '/intake/api/admin/conversations/' + encodeURIComponent(id),
+        { method: 'DELETE', credentials: 'same-origin' }
+      );
+      if (!res.ok) {
+        alert('Ошибка удаления: ' + res.status);
+        return false;
+      }
+      if (selectedId === id) {
+        selectedId = null;
+        detailEl.classList.remove('open');
+      }
+      return true;
+    }
+
     async function loadList() {
       const only = document.getElementById('applicationsOnly').checked;
-      const url = '/intake/api/admin/conversations?limit=200' +
-        (only ? '&applications_only=true' : '');
-      const res = await fetch(url, { credentials: 'same-origin' });
+      const sortBy = sortByEl.value;
+      const sortOrder = sortOrderEl.value;
+      const params = new URLSearchParams({
+        limit: '200',
+        sort_by: sortBy,
+        sort_order: sortOrder,
+      });
+      if (only) params.set('applications_only', 'true');
+
+      const res = await fetch('/intake/api/admin/conversations?' + params, {
+        credentials: 'same-origin',
+      });
       if (!res.ok) {
         alert('Ошибка загрузки: ' + res.status);
         return;
       }
       const data = await res.json();
-      statsEl.textContent = 'Всего: ' + data.total;
+      updateSortHeaders();
+      statsEl.textContent = 'Показано: ' + data.items.length + ' из ' + data.total;
       rowsEl.innerHTML = '';
       if (!data.items.length) {
         emptyEl.style.display = 'block';
-        detailEl.classList.remove('open');
+        if (!selectedId) detailEl.classList.remove('open');
         return;
       }
       emptyEl.style.display = 'none';
       data.items.forEach(function (item) {
         const tr = document.createElement('tr');
+        tr.className = 'data-row' + (item.id === selectedId ? ' selected' : '');
+        const source = item.source_url || '—';
         tr.innerHTML =
           '<td>' + fmt(item.created_at) + '</td>' +
           '<td>' + fmt(item.updated_at) + '</td>' +
           '<td><span class="badge ' + (item.has_application ? 'badge-yes' : 'badge-no') + '">' +
           (item.has_application ? 'да' : 'нет') + '</span></td>' +
-          '<td>' + (item.client_phone || '—') + '</td>' +
-          '<td>' + (item.vehicle || '—') + '</td>' +
-          '<td>' + (item.service_type || '—') + '</td>' +
+          '<td>' + escapeHtml(item.client_phone || '—') + '</td>' +
+          '<td>' + escapeHtml(item.vehicle || '—') + '</td>' +
+          '<td>' + escapeHtml(item.service_type || '—') + '</td>' +
           '<td>' + (item.message_count || 0) + '</td>' +
-          '<td style="font-family:monospace;font-size:11px">' + item.id + '</td>';
-        tr.addEventListener('click', function () { loadDetail(item.id); });
+          '<td class="source-cell" title="' + escapeHtml(source) + '">' + escapeHtml(source) + '</td>' +
+          '<td class="actions"><button type="button" class="btn btn-danger btn-sm btn-delete" data-id="' +
+          escapeHtml(item.id) + '">Удалить</button></td>';
+        tr.addEventListener('click', function (e) {
+          if (e.target.closest('.btn-delete')) return;
+          loadDetail(item.id);
+        });
+        const delBtn = tr.querySelector('.btn-delete');
+        delBtn.addEventListener('click', function (e) {
+          e.stopPropagation();
+          deleteConversation(item.id).then(function (ok) {
+            if (ok) loadList();
+          });
+        });
         rowsEl.appendChild(tr);
       });
     }
 
     async function loadDetail(id) {
+      selectedId = id;
+      document.querySelectorAll('tr.data-row').forEach(function (tr) {
+        const btn = tr.querySelector('.btn-delete');
+        tr.classList.toggle('selected', btn && btn.getAttribute('data-id') === id);
+      });
       const res = await fetch('/intake/api/admin/conversations/' + encodeURIComponent(id), {
         credentials: 'same-origin',
       });
@@ -195,15 +326,18 @@
       }
       const data = await res.json();
       const c = data.conversation;
-      detailMeta.textContent =
-        'Создан: ' + fmt(c.created_at) +
-        ' · Обновлён: ' + fmt(c.updated_at) +
-        (c.application_line ? ' · ' + c.application_line : '');
+      detailMeta.innerHTML =
+        '<div><strong>ID:</strong> <code>' + escapeHtml(c.id) + '</code></div>' +
+        '<div>Создан: ' + fmt(c.created_at) + ' · Обновлён: ' + fmt(c.updated_at) + '</div>' +
+        (c.source_url ? '<div>Источник: ' + escapeHtml(c.source_url) + '</div>' : '') +
+        (c.application_line ? '<div><strong>Заявка:</strong> ' + escapeHtml(c.application_line) + '</div>' : '');
       detailMessages.innerHTML = '';
       data.messages.forEach(function (m) {
         const div = document.createElement('div');
         div.className = 'msg ' + m.role;
-        div.textContent = (m.role === 'user' ? 'Клиент: ' : m.role === 'assistant' ? 'Бот: ' : '') + m.content;
+        div.textContent =
+          (m.role === 'user' ? 'Клиент: ' : m.role === 'assistant' ? 'Бот: ' : 'Система: ') +
+          m.content;
         detailMessages.appendChild(div);
       });
       detailEl.classList.add('open');
@@ -211,6 +345,46 @@
 
     document.getElementById('refreshBtn').addEventListener('click', loadList);
     document.getElementById('applicationsOnly').addEventListener('change', loadList);
+    sortByEl.addEventListener('change', loadList);
+    sortOrderEl.addEventListener('change', loadList);
+
+    document.querySelectorAll('th.sortable').forEach(function (th) {
+      th.addEventListener('click', function () {
+        const field = th.getAttribute('data-sort');
+        if (sortByEl.value === field) {
+          sortOrderEl.value = sortOrderEl.value === 'desc' ? 'asc' : 'desc';
+        } else {
+          sortByEl.value = field;
+          sortOrderEl.value = field === 'created_at' || field === 'updated_at' ? 'desc' : 'asc';
+        }
+        loadList();
+      });
+    });
+
+    document.getElementById('purgeShortBtn').addEventListener('click', async function () {
+      if (!confirm('Удалить все диалоги, в которых меньше 3 сообщений?')) return;
+      const res = await fetch('/intake/api/admin/purge-short?min_messages=3', {
+        method: 'POST',
+        credentials: 'same-origin',
+      });
+      if (!res.ok) {
+        alert('Ошибка: ' + res.status);
+        return;
+      }
+      const data = await res.json();
+      alert('Удалено диалогов: ' + data.deleted_count);
+      selectedId = null;
+      detailEl.classList.remove('open');
+      loadList();
+    });
+
+    document.getElementById('deleteDetailBtn').addEventListener('click', function () {
+      if (!selectedId) return;
+      deleteConversation(selectedId).then(function (ok) {
+        if (ok) loadList();
+      });
+    });
+
     loadList();
   </script>
 </body>
