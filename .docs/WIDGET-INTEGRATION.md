@@ -86,9 +86,12 @@ CSP на VPS должен включать домен сайта — см. [WIDG
 
 | Mechanism | Where |
 |-----------|--------|
-| `OLLAMA_KEEP_ALIVE=30m` | `docker-compose.yml` → service `ollama` |
+| `OLLAMA_KEEP_ALIVE=-1` | `docker-compose.yml` → `ollama` + `intake-api` |
+| `RAG_USE_EMBEDDINGS=false` | FAQ без загрузки embed-модели на каждый чат |
+| RAG только на FAQ-вопросы | `chat_proxy.py` (сбор заявки без RAG) |
 | `./scripts/model-warmup.sh` | после start / deploy |
-| Browser warmup | `embed/chat.js` (`keep_alive`, `num_predict: 1`) |
+| Browser warmup | `embed/chat.js` (`skip_rag`, `keep_alive: -1`) |
+| intake startup | прогрев `truck-service` при старте контейнера |
 | Parallel intake | `logMessage` без await перед Ollama |
 
 ---

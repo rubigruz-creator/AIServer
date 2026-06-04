@@ -10,7 +10,7 @@ source "$SCRIPT_DIR/common.sh"
 
 MODEL="${1:-${OLLAMA_WARMUP_MODEL:-truck-service:latest}}"
 OLLAMA_URL="${OLLAMA_URL:-http://127.0.0.1:11434}"
-KEEP_ALIVE="${OLLAMA_KEEP_ALIVE:-30m}"
+KEEP_ALIVE="${OLLAMA_KEEP_ALIVE:--1}"
 
 require_ollama
 

@@ -6,7 +6,8 @@
   var INTAKE_API = '/intake/api';
   var SESSION_KEY = 'aiserver_session_id';
   var MODEL = 'truck-service:latest';
-  var KEEP_ALIVE = '30m';
+  var KEEP_ALIVE = '-1';
+  var CHAT_NUM_PREDICT = 384;
   var messagesEl = document.getElementById('messages');
   var inputEl = document.getElementById('input');
   var sendBtn = document.getElementById('send');
@@ -83,6 +84,7 @@
         model: MODEL,
         stream: false,
         keep_alive: KEEP_ALIVE,
+        skip_rag: true,
         messages: [{ role: 'user', content: '.' }],
         options: { num_predict: 1 },
       }),
@@ -124,6 +126,7 @@
       stream: true,
       keep_alive: KEEP_ALIVE,
       messages: messages,
+      options: { num_predict: CHAT_NUM_PREDICT },
     };
   }
 
@@ -258,9 +261,9 @@
   var welcomeText =
     'Здравствуйте! Я помогу записать ваш грузовой автомобиль на обслуживание. Напишите, с чего начнём — марка и модель авто.';
 
+  warmupModel();
   ensureSession().then(function () {
     appendMessage('system', welcomeText);
     logMessage('system', welcomeText);
-    warmupModel();
   });
 })();

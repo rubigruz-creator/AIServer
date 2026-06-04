@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import re
 
-from app.config import RAG_TOP_K
+from app.config import RAG_TOP_K, RAG_USE_EMBEDDINGS
 from app.db import get_conn
 from app.rag.embeddings import embed_text
 from app.rag.store import cosine_similarity, init_rag_tables, load_all_chunks
@@ -55,14 +55,19 @@ async def search_chunks(query: str, top_k: int | None = None) -> list[dict[str, 
         return []
 
     scored: list[tuple[float, dict]] = []
-    try:
-        q_vec = await embed_text(query)
-        for row in stored:
-            cos = cosine_similarity(q_vec, row["embedding"])
-            kw = _keyword_score(query, row["content"] + " " + (row.get("heading") or ""))
-            combined = 0.55 * cos + 0.45 * kw
-            scored.append((combined, row))
-    except Exception:
+    if RAG_USE_EMBEDDINGS:
+        try:
+            q_vec = await embed_text(query)
+            for row in stored:
+                cos = cosine_similarity(q_vec, row["embedding"])
+                kw = _keyword_score(
+                    query, row["content"] + " " + (row.get("heading") or "")
+                )
+                combined = 0.55 * cos + 0.45 * kw
+                scored.append((combined, row))
+        except Exception:
+            scored = []
+    if not scored:
         for row in stored:
             kw = _keyword_score(query, row["content"] + " " + (row.get("heading") or ""))
             scored.append((kw, row))

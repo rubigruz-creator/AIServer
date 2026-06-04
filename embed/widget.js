@@ -66,6 +66,15 @@
   iframe.loading = 'lazy';
   iframe.setAttribute('allow', 'microphone');
 
+  var chatPreloaded = false;
+  function preloadChat() {
+    if (chatPreloaded) {
+      return;
+    }
+    chatPreloaded = true;
+    iframe.loading = 'eager';
+  }
+
   var hint = document.createElement('div');
   hint.id = 'aiserver-widget-hint';
   hint.setAttribute('role', 'tooltip');
@@ -134,6 +143,7 @@
 
   function revealLauncher() {
     launcher.classList.add('is-revealed');
+    preloadChat();
     if (!hintDismissed && !isOpen) {
       hint.classList.add('is-visible');
     }
@@ -173,7 +183,9 @@
     }
   }
 
+  launcher.addEventListener('mouseenter', preloadChat, { once: true });
   launcher.addEventListener('click', function () {
+    preloadChat();
     setOpen(!isOpen);
   });
 

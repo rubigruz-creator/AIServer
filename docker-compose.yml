@@ -15,7 +15,7 @@ services:
     environment:
       - TZ=${TZ:-Europe/Moscow}
       # Держать модель в RAM между запросами (см. .env OLLAMA_KEEP_ALIVE)
-      - OLLAMA_KEEP_ALIVE=${OLLAMA_KEEP_ALIVE:-30m}
+      - OLLAMA_KEEP_ALIVE=${OLLAMA_KEEP_ALIVE:--1}
     # Раскомментируйте блок ниже, если на сервере есть NVIDIA GPU:
     # deploy:
     #   resources:
@@ -72,9 +72,12 @@ services:
       - INTAKE_WEBHOOK_URL=${INTAKE_WEBHOOK_URL:-}
       - OLLAMA_BASE_URL=http://ollama:11434
       - CHAT_MODEL=${OLLAMA_DEFAULT_MODEL:-truck-service}:latest
+      - OLLAMA_KEEP_ALIVE=${OLLAMA_KEEP_ALIVE:--1}
+      - CHAT_DEFAULT_NUM_PREDICT=${CHAT_DEFAULT_NUM_PREDICT:-384}
       - RAG_ENABLED=${RAG_ENABLED:-true}
       - RAG_TOP_K=${RAG_TOP_K:-3}
       - RAG_EMBED_MODEL=${RAG_EMBED_MODEL:-nomic-embed-text}
+      - RAG_USE_EMBEDDINGS=${RAG_USE_EMBEDDINGS:-false}
       - KNOWLEDGE_DIR=/knowledge
       - TZ=${TZ:-Europe/Moscow}
     volumes:

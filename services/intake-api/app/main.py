@@ -1,3 +1,4 @@
+import asyncio
 import secrets
 import uuid
 from pathlib import Path
@@ -16,6 +17,7 @@ from app.config import (
     KNOWLEDGE_DIR,
     RAG_EMBED_MODEL,
     RAG_ENABLED,
+    RAG_USE_EMBEDDINGS,
 )
 from app.db import (
     delete_conversation,
@@ -37,7 +39,7 @@ SORT_FIELDS = {
     "source_url": "c.source_url",
 }
 from app.notifications import notify_application_created
-from app.chat_proxy import proxy_chat
+from app.chat_proxy import proxy_chat, warmup_chat_model
 from app.rag.ingest import reindex_knowledge_dir
 
 app = FastAPI(title="AIServer Intake API", version="1.1.0")
@@ -75,11 +77,12 @@ def require_admin(credentials: Annotated[HTTPBasicCredentials, Depends(security)
 
 
 @app.on_event("startup")
-def on_startup() -> None:
+async def on_startup() -> None:
     init_db()
     if AUTO_PURGE_MIN_MESSAGES > 0:
         with get_conn() as conn:
             purge_conversations_below_message_count(conn, AUTO_PURGE_MIN_MESSAGES)
+    asyncio.create_task(warmup_chat_model())
 
 
 @app.get("/health")
@@ -112,6 +115,7 @@ def rag_status(_user: Annotated[str, Depends(require_admin)]) -> dict[str, Any]:
         )
     return {
         "rag_enabled": RAG_ENABLED,
+        "rag_use_embeddings": RAG_USE_EMBEDDINGS,
         "embed_model": RAG_EMBED_MODEL,
         "knowledge_dir": str(KNOWLEDGE_DIR),
         "knowledge_files_on_disk": knowledge_files,
