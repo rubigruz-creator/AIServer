@@ -9,7 +9,14 @@ from fastapi.security import HTTPBasic, HTTPBasicCredentials
 from pydantic import BaseModel, Field
 
 from app import applications as app_parser
-from app.config import ADMIN_PASSWORD, ADMIN_USER, AUTO_PURGE_MIN_MESSAGES
+from app.config import (
+    ADMIN_PASSWORD,
+    ADMIN_USER,
+    AUTO_PURGE_MIN_MESSAGES,
+    KNOWLEDGE_DIR,
+    RAG_EMBED_MODEL,
+    RAG_ENABLED,
+)
 from app.db import (
     delete_conversation,
     get_conn,
@@ -84,6 +91,33 @@ def health() -> dict[str, str]:
 async def chat_with_rag(request: Request) -> Any:
     """Прокси Ollama /api/chat с RAG-контекстом (виджет)."""
     return await proxy_chat(request)
+
+
+@app.get("/api/rag/status")
+def rag_status(_user: Annotated[str, Depends(require_admin)]) -> dict[str, Any]:
+    """Сколько чанков в индексе, включён ли RAG (для проверки синхронизации)."""
+    from app.rag.store import init_rag_tables, load_all_chunks
+
+    with get_conn() as conn:
+        init_rag_tables(conn)
+        chunks = load_all_chunks(conn)
+    sources: dict[str, int] = {}
+    for ch in chunks:
+        sf = ch.get("source_file", "?")
+        sources[sf] = sources.get(sf, 0) + 1
+    knowledge_files = []
+    if KNOWLEDGE_DIR.is_dir():
+        knowledge_files = sorted(
+            p.name for p in KNOWLEDGE_DIR.glob("*.md") if p.name.lower() != "readme.md"
+        )
+    return {
+        "rag_enabled": RAG_ENABLED,
+        "embed_model": RAG_EMBED_MODEL,
+        "knowledge_dir": str(KNOWLEDGE_DIR),
+        "knowledge_files_on_disk": knowledge_files,
+        "chunks_indexed": len(chunks),
+        "chunks_by_source": sources,
+    }
 
 
 @app.post("/api/rag/reindex")

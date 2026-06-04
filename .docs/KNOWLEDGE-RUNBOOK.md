@@ -238,6 +238,36 @@ chmod +x /root/AIServer/scripts/*.sh
 
 ---
 
+## Синхронизация ПК → GitHub → VPS (если бот отвечает не по файлам)
+
+Изменения **не попадают в бота**, пока не выполнены **все** пункты:
+
+| Шаг | Где | Действие |
+|-----|-----|----------|
+| 1 | ПК | Правка `faq.md`, `services.md`, `truck-service-system.txt` |
+| 2 | ПК | `git add` + `git commit` + `git push` (рекомендуется) |
+| 3 | VPS | Файлы на диске = те же ( `git pull` **или** `scp` ) |
+| 4 | VPS | `./scripts/knowledge-apply.sh` (индекс + модель + виджет) |
+
+**Частые причины «не сработало»:**
+
+1. Файлы скопировали, но **не запустили** `knowledge-index.sh` и `model-create.sh`.
+2. На сайте старый **chat.js** (идёт в Ollama напрямую, **без RAG**). Проверка на VPS:  
+   `grep API_URL /var/www/aiserver/embed/chat.js` → должно быть `/intake/api/chat`.
+3. **RAG пустой** — не был `knowledge-index.sh` или ошибка 401. Проверка:  
+   `curl -u admin:ПАРОЛЬ http://127.0.0.1:3101/api/rag/status` → `chunks_indexed` > 0.
+4. В `services.md` было **противоречие** (например шиномонтаж и в «делаем», и в «не делаем») — модель путается.
+
+**Одна команда на VPS после scp/git pull:**
+
+```bash
+cd /root/AIServer && ./scripts/knowledge-apply.sh
+```
+
+**С ПК (PowerShell):** `.\scripts\knowledge-deploy.ps1`
+
+---
+
 ## Если что-то сломалось
 
 | Проблема | Что проверить |

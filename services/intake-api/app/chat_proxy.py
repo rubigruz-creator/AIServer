@@ -3,9 +3,12 @@
 from __future__ import annotations
 
 import json
+import logging
 from typing import Any, AsyncIterator
 
 import httpx
+
+logger = logging.getLogger(__name__)
 from fastapi import Request
 from fastapi.responses import StreamingResponse
 
@@ -32,11 +35,14 @@ async def _inject_rag(messages: list[dict[str, Any]]) -> list[dict[str, Any]]:
         return messages
     try:
         chunks = await search_chunks(query)
-    except Exception:
+    except Exception as exc:
+        logger.warning("RAG search failed, chat without knowledge context: %s", exc)
         return messages
     context = build_context_message(chunks)
     if not context:
+        logger.info("RAG: no chunks for query=%r (index empty or low score?)", query[:80])
         return messages
+    logger.debug("RAG: %d chunks for query=%r", len(chunks), query[:80])
     rag_msg = {"role": "system", "content": context}
     out = list(messages)
     last_user_idx = -1
